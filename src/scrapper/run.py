@@ -12,6 +12,7 @@ from scrapper.models import Config, Profile
 from scrapper.notifier import render, send, subject_for, warnings_from
 from scrapper.sources.base import Source, build_client, collect
 from scrapper.sources.justjoinit import JustJoinIt
+from scrapper.sources.nofluffjobs import NoFluffJobs
 from scrapper.store import append, load_seen, select_new
 
 logger = logging.getLogger(__name__)
@@ -72,8 +73,8 @@ def main() -> None:
     cities = cities_from_profiles(config.profiles)
 
     with build_client() as client:
-        source = JustJoinIt(cities=cities)
-        count = run(config, [source], STORE_PATH, client, datetime.now(timezone.utc))
+        sources = [JustJoinIt(cities=cities), NoFluffJobs(cities=cities)]
+        count = run(config, sources, STORE_PATH, client, datetime.now(timezone.utc))
     print(f"nowe_oferty={count}")
 
 

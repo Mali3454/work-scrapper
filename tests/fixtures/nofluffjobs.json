@@ -1,0 +1,810 @@
+{
+  "criteriaSearch": {
+    "country": [],
+    "withSalaryMatch": [],
+    "city": [
+      "szczecin"
+    ],
+    "more": [],
+    "employment": [],
+    "requirement": [],
+    "salary": [],
+    "jobPosition": [],
+    "applicationStatus": [],
+    "province": [],
+    "company": [],
+    "id": [],
+    "category": [],
+    "keyword": [],
+    "jobLanguage": [],
+    "seniority": []
+  },
+  "postings": [
+    {
+      "id": "senior-power-platform-developer-with-copilot-studio-spyrosoft-Szczecin",
+      "name": "Spyrosoft",
+      "location": {
+        "places": [
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "city": "Szczecin",
+            "street": "Cyfrowa 4",
+            "postalCode": "71-441",
+            "geoLocation": {
+              "latitude": 53.4499821,
+              "longitude": 14.5362943
+            },
+            "url": "senior-power-platform-developer-with-copilot-studio-spyrosoft-szczecin"
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "city": "Wrocław",
+            "street": "plac Nowy Targ 28",
+            "postalCode": "50-141",
+            "geoLocation": {
+              "latitude": 51.1104135,
+              "longitude": 17.0385273
+            },
+            "url": "senior-power-platform-developer-with-copilot-studio-spyrosoft-wroclaw"
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "city": "Białystok",
+            "street": "Świętojańska 12a",
+            "postalCode": "15-082",
+            "geoLocation": {
+              "latitude": 53.1279897,
+              "longitude": 23.1726761
+            },
+            "url": "senior-power-platform-developer-with-copilot-studio-spyrosoft-bialystok"
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "city": "Kraków",
+            "street": "Zabłocie 43A",
+            "postalCode": "30-701",
+            "geoLocation": {
+              "latitude": 50.04910169999999,
+              "longitude": 19.9664188
+            },
+            "url": "senior-power-platform-developer-with-copilot-studio-spyrosoft-krakow"
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "city": "Gdańsk",
+            "street": "Marynarki Polskiej 163",
+            "postalCode": "80-557",
+            "geoLocation": {
+              "latitude": 54.371981,
+              "longitude": 18.6345455
+            },
+            "url": "senior-power-platform-developer-with-copilot-studio-spyrosoft-gdansk"
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "city": "Gdynia",
+            "street": "",
+            "postalCode": "",
+            "geoLocation": {
+              "latitude": 54.518352,
+              "longitude": 18.5291932
+            },
+            "url": "senior-power-platform-developer-with-copilot-studio-spyrosoft-gdynia"
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "city": "Łódź",
+            "street": "al. marsz. Józefa Piłsudskiego 24",
+            "postalCode": "90-368",
+            "geoLocation": {
+              "latitude": 51.7608301,
+              "longitude": 19.4664517
+            },
+            "url": "senior-power-platform-developer-with-copilot-studio-spyrosoft-lodz"
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "city": "Warszawa",
+            "street": "Postępu 15",
+            "postalCode": "02-676",
+            "geoLocation": {
+              "latitude": 52.1804976,
+              "longitude": 20.9972288
+            },
+            "url": "senior-power-platform-developer-with-copilot-studio-spyrosoft-warszawa"
+          }
+        ],
+        "fullyRemote": false,
+        "covidTimeRemotely": false,
+        "hybridDesc": ""
+      },
+      "posted": 1785967265137,
+      "title": "Senior Power Platform Developer (with Copilot Studio)",
+      "logo": {
+        "original": "companies/logos/original/spyrosoft_20200313_111958_20220812_125109.png",
+        "jobs_details": "companies/logos/jobs_details/spyrosoft_20200313_111958_20220812_125109.png",
+        "jobs_listing": "companies/logos/jobs_listing/spyrosoft_20200313_111958_20220812_125109.png",
+        "jobs_details_2x": "companies/logos/jobs_details_2x/spyrosoft_20200313_111958_20220812_125109.png",
+        "jobs_listing_2x": "companies/logos/jobs_listing_2x/spyrosoft_20200313_111958_20220812_125109.png",
+        "companies_details": "companies/logos/companies_details/spyrosoft_20200313_111958_20220812_125109.png",
+        "companies_listing": "companies/logos/companies_listing/spyrosoft_20200313_111958_20220812_125109.png",
+        "jobs_details_webp": "companies/logos/jobs_details/spyrosoft_20200313_111958_20220812_125109.webp",
+        "jobs_listing_webp": "companies/logos/jobs_listing/spyrosoft_20200313_111958_20220812_125109.webp",
+        "companies_details_2x": "companies/logos/companies_details_2x/spyrosoft_20200313_111958_20220812_125109.png",
+        "companies_listing_2x": "companies/logos/companies_listing_2x/spyrosoft_20200313_111958_20220812_125109.png",
+        "jobs_details_2x_webp": "companies/logos/jobs_details_2x/spyrosoft_20200313_111958_20220812_125109.webp",
+        "jobs_listing_2x_webp": "companies/logos/jobs_listing_2x/spyrosoft_20200313_111958_20220812_125109.webp",
+        "original_pixel_image": "companies/logos/original_pixel_image/spyrosoft_20200313_111958_20220812_125109.png",
+        "companies_details_webp": "companies/logos/companies_details/spyrosoft_20200313_111958_20220812_125109.webp",
+        "companies_listing_webp": "companies/logos/companies_listing/spyrosoft_20200313_111958_20220812_125109.webp",
+        "companies_details_2x_webp": "companies/logos/companies_details_2x/spyrosoft_20200313_111958_20220812_125109.webp",
+        "companies_listing_2x_webp": "companies/logos/companies_listing_2x/spyrosoft_20200313_111958_20220812_125109.webp"
+      },
+      "category": "artificialIntelligence",
+      "seniority": [
+        "Senior"
+      ],
+      "url": "senior-power-platform-developer-with-copilot-studio-spyrosoft-szczecin",
+      "regions": [
+        "pl"
+      ],
+      "fullyRemote": false,
+      "salary": {
+        "from": 18480.0,
+        "to": 25200.0,
+        "type": "b2b",
+        "currency": "PLN",
+        "disclosedAt": "VISIBLE",
+        "flexibleUpperBound": false
+      },
+      "flavors": [
+        "it"
+      ],
+      "topInSearch": false,
+      "highlighted": false,
+      "help4Ua": false,
+      "reference": "UHG8LSZD",
+      "searchBoost": false,
+      "onlineInterviewAvailable": false,
+      "tiles": {
+        "values": [
+          {
+            "value": "artificial-intelligence",
+            "type": "category"
+          },
+          {
+            "value": "Power Platform",
+            "type": "requirement"
+          },
+          {
+            "value": "Microsoft Copilot Studio",
+            "type": "requirement"
+          },
+          {
+            "value": "AI",
+            "type": "requirement"
+          }
+        ]
+      }
+    },
+    {
+      "id": "leading-d365-technical-consultant-f-m-x-sii-polska-Szczecin",
+      "name": "Sii Polska",
+      "location": {
+        "places": [
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "city": "Szczecin",
+            "street": "ul. Storrady-Świętosławy 1B",
+            "postalCode": "71-602",
+            "geoLocation": {
+              "latitude": 53.4322966,
+              "longitude": 14.5687805
+            },
+            "url": "leading-d365-technical-consultant-f-m-x-sii-polska-szczecin"
+          },
+          {
+            "city": "Remote",
+            "url": "leading-d365-technical-consultant-f-m-x-sii-polska-remote"
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "city": "Kraków",
+            "street": "ul. Wadowicka 12",
+            "postalCode": "30-415",
+            "geoLocation": {
+              "latitude": 50.0310399,
+              "longitude": 19.937972
+            },
+            "url": "leading-d365-technical-consultant-f-m-x-sii-polska-krakow"
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "city": "Poznań",
+            "street": "ul. Królowej Jadwigi 43",
+            "postalCode": "61-872",
+            "geoLocation": {
+              "latitude": 52.3990525,
+              "longitude": 16.9308248
+            },
+            "url": "leading-d365-technical-consultant-f-m-x-sii-polska-poznan"
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "city": "Warszawa",
+            "street": "Aleja Niepodległości 69",
+            "postalCode": "02-626",
+            "geoLocation": {
+              "latitude": 52.1904708,
+              "longitude": 21.015751
+            },
+            "url": "leading-d365-technical-consultant-f-m-x-sii-polska-warszawa"
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "city": "Toruń",
+            "street": "ul. Tadeusza Kościuszki 71",
+            "postalCode": "87-100",
+            "geoLocation": {
+              "latitude": 53.0252547,
+              "longitude": 18.6254707
+            },
+            "url": "leading-d365-technical-consultant-f-m-x-sii-polska-torun"
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "city": "Wrocław",
+            "street": "ul. Na Ostatnim Groszu 3",
+            "postalCode": "54-207",
+            "geoLocation": {
+              "latitude": 51.1251369,
+              "longitude": 16.9764299
+            },
+            "url": "leading-d365-technical-consultant-f-m-x-sii-polska-wroclaw"
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "city": "Rzeszów",
+            "street": "al. Rejtana 20b",
+            "postalCode": "35-310",
+            "geoLocation": {
+              "latitude": 50.02712030000001,
+              "longitude": 22.0160864
+            },
+            "url": "leading-d365-technical-consultant-f-m-x-sii-polska-rzeszow"
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "city": "Bydgoszcz",
+            "street": "Plac Kościeleckich 3",
+            "postalCode": "85-033",
+            "geoLocation": {
+              "latitude": 53.1206676,
+              "longitude": 18.0034964
+            },
+            "url": "leading-d365-technical-consultant-f-m-x-sii-polska-bydgoszcz"
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "city": "Łódź",
+            "street": "ul. Piotrkowska 157 A",
+            "postalCode": "90-440",
+            "geoLocation": {
+              "latitude": 51.75967720000001,
+              "longitude": 19.4564045
+            },
+            "url": "leading-d365-technical-consultant-f-m-x-sii-polska-lodz"
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "city": "Białystok",
+            "street": "ul. Józefa Marjańskiego 3/7",
+            "postalCode": "15-402",
+            "geoLocation": {
+              "latitude": 53.12976889999999,
+              "longitude": 23.154625
+            },
+            "url": "leading-d365-technical-consultant-f-m-x-sii-polska-bialystok"
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "city": "Piła",
+            "street": "ul. Wojciecha Kossaka 20",
+            "postalCode": "64-920",
+            "geoLocation": {
+              "latitude": 53.1579615,
+              "longitude": 16.7557003
+            },
+            "url": "leading-d365-technical-consultant-f-m-x-sii-polska-pila"
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "city": "Lublin",
+            "street": "ul. Szeligowskiego 6B",
+            "postalCode": "20-883",
+            "geoLocation": {
+              "latitude": 51.25586819999999,
+              "longitude": 22.5576291
+            },
+            "url": "leading-d365-technical-consultant-f-m-x-sii-polska-lublin"
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "city": "Katowice",
+            "street": "Al. Roździeńskiego 1A",
+            "postalCode": "40-202",
+            "geoLocation": {
+              "latitude": 50.2646402,
+              "longitude": 19.0263463
+            },
+            "url": "leading-d365-technical-consultant-f-m-x-sii-polska-katowice"
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "city": "Gdańsk",
+            "street": "Al. Grunwaldzka 472 E",
+            "postalCode": "80-309",
+            "geoLocation": {
+              "latitude": 54.4043887,
+              "longitude": 18.5710007
+            },
+            "url": "leading-d365-technical-consultant-f-m-x-sii-polska-gdansk"
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "province": "lubusz",
+            "url": "leading-d365-technical-consultant-f-m-x-sii-polska-lubusz",
+            "provinceOnly": true
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "province": "opole",
+            "url": "leading-d365-technical-consultant-f-m-x-sii-polska-opole",
+            "provinceOnly": true
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "province": "holy-cross",
+            "url": "leading-d365-technical-consultant-f-m-x-sii-polska-holy-cross",
+            "provinceOnly": true
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "province": "warmian-masurian",
+            "url": "leading-d365-technical-consultant-f-m-x-sii-polska-warmian-masurian",
+            "provinceOnly": true
+          }
+        ],
+        "fullyRemote": true,
+        "covidTimeRemotely": false,
+        "hybridDesc": ""
+      },
+      "posted": 1785847513216,
+      "renewed": 1786020313216,
+      "title": "Leading D365 Technical Consultant (f/m/x)",
+      "logo": {
+        "original": "companies/logos/original/ee4d00005df000158e2008da6654e4da_20240623_114439.png",
+        "jobs_details": "companies/logos/jobs_details/ee4d00005df000158e2008da6654e4da_20240623_114439.png",
+        "jobs_listing": "companies/logos/jobs_listing/ee4d00005df000158e2008da6654e4da_20240623_114439.png",
+        "jobs_details_2x": "companies/logos/jobs_details_2x/ee4d00005df000158e2008da6654e4da_20240623_114439.png",
+        "jobs_listing_2x": "companies/logos/jobs_listing_2x/ee4d00005df000158e2008da6654e4da_20240623_114439.png",
+        "companies_details": "companies/logos/companies_details/ee4d00005df000158e2008da6654e4da_20240623_114439.png",
+        "companies_listing": "companies/logos/companies_listing/ee4d00005df000158e2008da6654e4da_20240623_114439.png",
+        "jobs_details_webp": "companies/logos/jobs_details/ee4d00005df000158e2008da6654e4da_20240623_114439.webp",
+        "jobs_listing_webp": "companies/logos/jobs_listing/ee4d00005df000158e2008da6654e4da_20240623_114439.webp",
+        "companies_details_2x": "companies/logos/companies_details_2x/ee4d00005df000158e2008da6654e4da_20240623_114439.png",
+        "companies_listing_2x": "companies/logos/companies_listing_2x/ee4d00005df000158e2008da6654e4da_20240623_114439.png",
+        "jobs_details_2x_webp": "companies/logos/jobs_details_2x/ee4d00005df000158e2008da6654e4da_20240623_114439.webp",
+        "jobs_listing_2x_webp": "companies/logos/jobs_listing_2x/ee4d00005df000158e2008da6654e4da_20240623_114439.webp",
+        "original_pixel_image": "companies/logos/original_pixel_image/ee4d00005df000158e2008da6654e4da_20240623_114439.png",
+        "companies_details_webp": "companies/logos/companies_details/ee4d00005df000158e2008da6654e4da_20240623_114439.webp",
+        "companies_listing_webp": "companies/logos/companies_listing/ee4d00005df000158e2008da6654e4da_20240623_114439.webp",
+        "companies_details_2x_webp": "companies/logos/companies_details_2x/ee4d00005df000158e2008da6654e4da_20240623_114439.webp",
+        "companies_listing_2x_webp": "companies/logos/companies_listing_2x/ee4d00005df000158e2008da6654e4da_20240623_114439.webp"
+      },
+      "category": "erp",
+      "seniority": [
+        "Senior"
+      ],
+      "url": "leading-d365-technical-consultant-f-m-x-sii-polska-szczecin",
+      "regions": [
+        "pl"
+      ],
+      "fullyRemote": false,
+      "salary": {
+        "from": 26880.0,
+        "to": 30240.0,
+        "type": "b2b",
+        "currency": "PLN",
+        "disclosedAt": "VISIBLE",
+        "flexibleUpperBound": false
+      },
+      "flavors": [
+        "it"
+      ],
+      "topInSearch": false,
+      "highlighted": false,
+      "help4Ua": false,
+      "reference": "MIGGA94X",
+      "searchBoost": true,
+      "onlineInterviewAvailable": true,
+      "tiles": {
+        "values": [
+          {
+            "value": "erp",
+            "type": "category"
+          },
+          {
+            "value": "Microsoft Power Platform",
+            "type": "requirement"
+          },
+          {
+            "value": "Microsoft Dynamics 365",
+            "type": "requirement"
+          },
+          {
+            "value": "Software Development Lifecycle (SDLC)",
+            "type": "requirement"
+          }
+        ]
+      }
+    },
+    {
+      "id": "mid-back-end-java-developer-cognitran-Szczecin",
+      "name": "Cognitran",
+      "location": {
+        "places": [
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "city": "Szczecin",
+            "street": "ul. Wojska Polskiego 8",
+            "postalCode": "70-471",
+            "geoLocation": {
+              "latitude": 53.4269083,
+              "longitude": 14.5447524
+            },
+            "url": "mid-back-end-java-developer-cognitran-szczecin"
+          },
+          {
+            "city": "Remote",
+            "url": "mid-back-end-java-developer-cognitran-remote"
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "city": "Poznań",
+            "street": "Tylne Chwaliszewo 25",
+            "postalCode": "61-103",
+            "geoLocation": {
+              "latitude": 52.4085113,
+              "longitude": 16.943347
+            },
+            "url": "mid-back-end-java-developer-cognitran-poznan"
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "province": "lower-silesian",
+            "url": "mid-back-end-java-developer-cognitran-lower-silesian",
+            "provinceOnly": true
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "province": "kuyavian-pomeranian",
+            "url": "mid-back-end-java-developer-cognitran-kuyavian-pomeranian",
+            "provinceOnly": true
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "province": "lodz",
+            "url": "mid-back-end-java-developer-cognitran-lodz",
+            "provinceOnly": true
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "province": "lublin",
+            "url": "mid-back-end-java-developer-cognitran-lublin",
+            "provinceOnly": true
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "province": "lubusz",
+            "url": "mid-back-end-java-developer-cognitran-lubusz",
+            "provinceOnly": true
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "province": "lesser-poland",
+            "url": "mid-back-end-java-developer-cognitran-lesser-poland",
+            "provinceOnly": true
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "province": "masovian",
+            "url": "mid-back-end-java-developer-cognitran-masovian",
+            "provinceOnly": true
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "province": "opole",
+            "url": "mid-back-end-java-developer-cognitran-opole",
+            "provinceOnly": true
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "province": "subcarpathian",
+            "url": "mid-back-end-java-developer-cognitran-subcarpathian",
+            "provinceOnly": true
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "province": "podlaskie",
+            "url": "mid-back-end-java-developer-cognitran-podlaskie",
+            "provinceOnly": true
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "province": "pomeranian",
+            "url": "mid-back-end-java-developer-cognitran-pomeranian",
+            "provinceOnly": true
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "province": "silesian",
+            "url": "mid-back-end-java-developer-cognitran-silesian",
+            "provinceOnly": true
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "province": "holy-cross",
+            "url": "mid-back-end-java-developer-cognitran-holy-cross",
+            "provinceOnly": true
+          },
+          {
+            "country": {
+              "code": "POL",
+              "name": "Poland"
+            },
+            "province": "warmian-masurian",
+            "url": "mid-back-end-java-developer-cognitran-warmian-masurian",
+            "provinceOnly": true
+          }
+        ],
+        "fullyRemote": true,
+        "covidTimeRemotely": false,
+        "hybridDesc": ""
+      },
+      "posted": 1785535222245,
+      "renewed": 1785967222245,
+      "title": "Mid Back-End Java Developer",
+      "technology": "Java",
+      "logo": {
+        "original": "companies/logos/original/logo_20230228_134444.png",
+        "jobs_details": "companies/logos/jobs_details/logo_20230228_134444.png",
+        "jobs_listing": "companies/logos/jobs_listing/logo_20230228_134444.png",
+        "jobs_details_2x": "companies/logos/jobs_details_2x/logo_20230228_134444.png",
+        "jobs_listing_2x": "companies/logos/jobs_listing_2x/logo_20230228_134444.png",
+        "companies_details": "companies/logos/companies_details/logo_20230228_134444.png",
+        "companies_listing": "companies/logos/companies_listing/logo_20230228_134444.png",
+        "jobs_details_webp": "companies/logos/jobs_details/logo_20230228_134444.webp",
+        "jobs_listing_webp": "companies/logos/jobs_listing/logo_20230228_134444.webp",
+        "companies_details_2x": "companies/logos/companies_details_2x/logo_20230228_134444.png",
+        "companies_listing_2x": "companies/logos/companies_listing_2x/logo_20230228_134444.png",
+        "jobs_details_2x_webp": "companies/logos/jobs_details_2x/logo_20230228_134444.webp",
+        "jobs_listing_2x_webp": "companies/logos/jobs_listing_2x/logo_20230228_134444.webp",
+        "original_pixel_image": "companies/logos/original_pixel_image/logo_20230228_134444.png",
+        "companies_details_webp": "companies/logos/companies_details/logo_20230228_134444.webp",
+        "companies_listing_webp": "companies/logos/companies_listing/logo_20230228_134444.webp",
+        "companies_details_2x_webp": "companies/logos/companies_details_2x/logo_20230228_134444.webp",
+        "companies_listing_2x_webp": "companies/logos/companies_listing_2x/logo_20230228_134444.webp"
+      },
+      "category": "backend",
+      "seniority": [
+        "Mid"
+      ],
+      "url": "mid-back-end-java-developer-cognitran-szczecin",
+      "regions": [
+        "pl"
+      ],
+      "fullyRemote": false,
+      "salary": {
+        "from": 12000.0,
+        "to": 16000.0,
+        "type": "permanent",
+        "currency": "PLN",
+        "disclosedAt": "VISIBLE",
+        "flexibleUpperBound": false
+      },
+      "flavors": [
+        "it"
+      ],
+      "topInSearch": false,
+      "highlighted": false,
+      "help4Ua": false,
+      "reference": "DMQJKZ4A",
+      "searchBoost": true,
+      "onlineInterviewAvailable": true,
+      "tiles": {
+        "values": [
+          {
+            "value": "backend",
+            "type": "category"
+          },
+          {
+            "value": "Java",
+            "type": "requirement"
+          },
+          {
+            "value": "Gradle",
+            "type": "requirement"
+          },
+          {
+            "value": "Spring Boot",
+            "type": "requirement"
+          }
+        ]
+      }
+    }
+  ],
+  "totalCount": 3,
+  "totalPages": 1,
+  "exactMatchesPages": 1,
+  "rawSearch": "city=szczecin",
+  "locationCriteria": true,
+  "divs": 3,
+  "additionalSearch": [
+    {
+      "criteriaSearch": {
+        "country": [],
+        "withSalaryMatch": [],
+        "city": [
+          "remote"
+        ],
+        "more": [],
+        "employment": [],
+        "requirement": [],
+        "salary": [],
+        "jobPosition": [],
+        "applicationStatus": [],
+        "province": [],
+        "company": [],
+        "id": [],
+        "category": [],
+        "keyword": [],
+        "jobLanguage": [],
+        "seniority": []
+      },
+      "postings": [],
+      "totalCount": 358,
+      "divs": 358,
+      "rawSearch": "city=remote"
+    }
+  ],
+  "salaryMatchBlock": {
+    "offers": [],
+    "totalCount": 0,
+    "divs": 0
+  },
+  "overridenSalaryFilter": {}
+}
