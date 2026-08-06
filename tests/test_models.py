@@ -54,3 +54,24 @@ def test_profile_defaults():
     assert profile.exclude == []
     assert profile.include_remote is True
     assert profile.max_age_days == 14
+
+
+def test_rawjob_normalizes_naive_posted_at_to_utc():
+    # Naiwny datetime (bez tzinfo) powinien być znormalizowany do UTC
+    naive_dt = datetime(2026, 8, 1, 12, 0, 0)
+    job = _raw(posted_at=naive_dt)
+
+    assert job.posted_at.tzinfo == timezone.utc
+    assert job.posted_at.year == 2026
+    assert job.posted_at.month == 8
+    assert job.posted_at.day == 1
+    assert job.posted_at.hour == 12
+
+
+def test_rawjob_keeps_aware_posted_at_unchanged():
+    # Aware datetime powinien przejść bez zmian
+    aware_dt = datetime(2026, 7, 15, 10, 30, tzinfo=timezone.utc)
+    job = _raw(posted_at=aware_dt)
+
+    assert job.posted_at == aware_dt
+    assert job.posted_at.tzinfo == timezone.utc

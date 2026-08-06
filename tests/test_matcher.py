@@ -78,3 +78,15 @@ def test_filter_jobs_keeps_only_matching():
     result = filter_jobs(jobs, PROFILE, NOW)
 
     assert [j.external_id for j in result] == ["1"]
+
+
+def test_matches_with_naive_posted_at_old():
+    # Naiwny posted_at (bez timezone) sprzed 30 dni powinien być odrzucony
+    naive_dt = datetime(2026, 7, 7, 12, 0, 0)  # 30 dni przed NOW
+    assert matches(_job(posted_at=naive_dt), PROFILE, NOW) is False
+
+
+def test_matches_with_naive_posted_at_recent():
+    # Naiwny posted_at sprzed 1 dnia powinien być przyjęty
+    naive_dt = datetime(2026, 8, 5, 12, 0, 0)  # 1 dzień przed NOW
+    assert matches(_job(posted_at=naive_dt), PROFILE, NOW) is True

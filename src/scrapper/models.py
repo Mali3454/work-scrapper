@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class RawJob(BaseModel):
@@ -15,6 +15,14 @@ class RawJob(BaseModel):
     url: str
     salary: str | None = None
     posted_at: datetime | None = None
+
+    @field_validator("posted_at", mode="before")
+    @classmethod
+    def normalize_posted_at(cls, value):
+        """Normalizuj naiwny posted_at do UTC (zakładamy UTC gdy brakuje strefy)."""
+        if value is not None and isinstance(value, datetime) and value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value
 
 
 class Job(RawJob):
