@@ -1,0 +1,439 @@
+{
+  "data": [
+    {
+      "guid": "55a8360e-ae29-4f07-9920-39e66af48d31",
+      "slug": "antal-sp-z-o-o--grid-converter-control-engineer-szczecin-other",
+      "title": "Grid Converter Control Engineer",
+      "workplaceType": "office",
+      "workingTime": "full_time",
+      "experienceLevel": "senior",
+      "category": {
+        "key": "other",
+        "parentKey": null
+      },
+      "city": "Szczecin",
+      "street": "Szczecin",
+      "latitude": 53.386059,
+      "longitude": 14.65441,
+      "isRemoteInterview": false,
+      "companyName": "Antal Sp. z o.o.",
+      "companyLogoThumbUrl": "https://imgproxy.justjoinit.tech/Uz1m_KrR3VkxVrveY67-9ecouh8wUIiDYE7QBm3PNvk/h:200/w:200/plain/https://public.justjoin.it/companies/logos/original/2e0080af317134208fe254c324f6c759a522bc1f.png",
+      "publishedAt": "2026-08-06T06:55:32.0185156Z",
+      "isOpenToHireUkrainians": false,
+      "locations": [
+        {
+          "city": "Szczecin",
+          "street": "Szczecin",
+          "latitude": 53.386059,
+          "longitude": 14.65441,
+          "slug": "antal-sp-z-o-o--grid-converter-control-engineer-szczecin-other"
+        }
+      ],
+      "employmentTypes": [
+        {
+          "from": null,
+          "fromPerUnit": null,
+          "to": null,
+          "toPerUnit": null,
+          "currency": "PLN",
+          "currencySource": "original",
+          "type": "permanent",
+          "unit": "month",
+          "gross": true
+        },
+        {
+          "from": null,
+          "fromPerUnit": null,
+          "to": null,
+          "toPerUnit": null,
+          "currency": "CHF",
+          "currencySource": "conversion",
+          "type": "permanent",
+          "unit": "month",
+          "gross": true
+        },
+        {
+          "from": null,
+          "fromPerUnit": null,
+          "to": null,
+          "toPerUnit": null,
+          "currency": "EUR",
+          "currencySource": "conversion",
+          "type": "permanent",
+          "unit": "month",
+          "gross": true
+        },
+        {
+          "from": null,
+          "fromPerUnit": null,
+          "to": null,
+          "toPerUnit": null,
+          "currency": "GBP",
+          "currencySource": "conversion",
+          "type": "permanent",
+          "unit": "month",
+          "gross": true
+        },
+        {
+          "from": null,
+          "fromPerUnit": null,
+          "to": null,
+          "toPerUnit": null,
+          "currency": "USD",
+          "currencySource": "conversion",
+          "type": "permanent",
+          "unit": "month",
+          "gross": true
+        }
+      ],
+      "requiredSkills": [
+        {
+          "name": "Matlab",
+          "level": 3
+        },
+        {
+          "name": "GFM",
+          "level": 3
+        },
+        {
+          "name": "GFL",
+          "level": 3
+        }
+      ],
+      "niceToHaveSkills": [],
+      "languages": [],
+      "isPromoted": false,
+      "isSuperOffer": false,
+      "applyMethod": "external",
+      "applyUrl": "https://antalpl.traffit.com/public/form/a/edef24aa266c83d93a22b578b2edddaf36444f6f4563453d?source=justjoin.it",
+      "lastPublishedAt": "2026-08-06T06:55:32.0185156Z",
+      "expiredAt": "2026-11-04T22:59:59.9999999Z",
+      "hybridWorkSchedule": null
+    },
+    {
+      "guid": "d9bae961-b260-4230-a9ec-0763bfec307a",
+      "slug": "jit-team-senior-net-developer-gdansk-net-1db50058",
+      "title": "Senior .Net Developer",
+      "workplaceType": "remote",
+      "workingTime": "full_time",
+      "experienceLevel": "senior",
+      "category": {
+        "key": "net",
+        "parentKey": null
+      },
+      "city": "Gdańsk",
+      "street": "Nad Stawem",
+      "latitude": 54.33757,
+      "longitude": 18.71966,
+      "isRemoteInterview": false,
+      "companyName": "Jit Team",
+      "companyLogoThumbUrl": "https://imgproxy.justjoinit.tech/wWSYQ3PfIRATt5r6FpNQ1tx2EsfW1STfzPhAXi3RVQg/h:200/w:200/plain/https://public.justjoin.it/companies/logos/original/00ba86031f7afdcdef6c386aea90b95428e30224.png",
+      "publishedAt": "2026-08-06T10:31:23.032739Z",
+      "isOpenToHireUkrainians": false,
+      "locations": [
+        {
+          "city": "Gdańsk",
+          "street": "Nad Stawem",
+          "latitude": 54.33757,
+          "longitude": 18.71966,
+          "slug": "jit-team-senior-net-developer-gdansk-net-1db50058"
+        },
+        {
+          "city": "Warszawa",
+          "street": "Przyokopowa",
+          "latitude": 52.23584,
+          "longitude": 21.011959,
+          "slug": "jit-team-senior-net-developer-warszawa-net-9cc4112f"
+        },
+        {
+          "city": "Kraków",
+          "street": "Lubomirskiego",
+          "latitude": 50.031029,
+          "longitude": 19.942881,
+          "slug": "jit-team-senior-net-developer-krakow-net-718204d3"
+        }
+      ],
+      "employmentTypes": [
+        {
+          "from": 26000.0,
+          "fromPerUnit": 26000.0,
+          "to": 31000.0,
+          "toPerUnit": 31000.0,
+          "currency": "PLN",
+          "currencySource": "original",
+          "type": "b2b",
+          "unit": "Month",
+          "gross": false
+        },
+        {
+          "from": 6967.0,
+          "fromPerUnit": 6966.773847802782,
+          "to": 8307.0,
+          "toPerUnit": 8306.538049303317,
+          "currency": "USD",
+          "currencySource": "conversion",
+          "type": "b2b",
+          "unit": "Month",
+          "gross": false
+        },
+        {
+          "from": 6039.0,
+          "fromPerUnit": 6039.488966318236,
+          "to": 7201.0,
+          "toPerUnit": 7200.929152148666,
+          "currency": "EUR",
+          "currencySource": "conversion",
+          "type": "b2b",
+          "unit": "Month",
+          "gross": false
+        },
+        {
+          "from": 5642.0,
+          "fromPerUnit": 5642.361111111114,
+          "to": 6727.0,
+          "toPerUnit": 6727.430555555559,
+          "currency": "CHF",
+          "currencySource": "conversion",
+          "type": "b2b",
+          "unit": "Month",
+          "gross": false
+        },
+        {
+          "from": 5177.0,
+          "fromPerUnit": 5177.323323841578,
+          "to": 6173.0,
+          "toPerUnit": 6172.962424580343,
+          "currency": "GBP",
+          "currencySource": "conversion",
+          "type": "b2b",
+          "unit": "Month",
+          "gross": false
+        }
+      ],
+      "requiredSkills": [
+        {
+          "name": ".Net",
+          "level": 4
+        },
+        {
+          "name": "Python",
+          "level": 2
+        },
+        {
+          "name": "Azure",
+          "level": 3
+        },
+        {
+          "name": "Kubernetes",
+          "level": 3
+        },
+        {
+          "name": "React",
+          "level": 1
+        },
+        {
+          "name": "English",
+          "level": 3
+        }
+      ],
+      "niceToHaveSkills": [],
+      "languages": [],
+      "isPromoted": false,
+      "isSuperOffer": false,
+      "applyMethod": "external",
+      "applyUrl": "https://jit.traffit.com/public/form/a/cdc630b9d4858a1fb86ffd1543d7ddb55367394b4d513d3d?source=justjoin.it",
+      "lastPublishedAt": "2026-08-06T10:31:23.032739Z",
+      "expiredAt": "2026-09-05T10:31:23.032739Z",
+      "hybridWorkSchedule": null
+    },
+    {
+      "guid": "9d6f2fa4-7812-4406-87dc-4917e8b996a6",
+      "slug": "postdata-starszy-tester-starsza-testerka-oprogramowania-playwright-cypress--gdansk-testing",
+      "title": "Starszy Tester/Starsza Testerka oprogramowania (Playwright/Cypress)",
+      "workplaceType": "office",
+      "workingTime": "full_time",
+      "experienceLevel": "senior",
+      "category": {
+        "key": "testing",
+        "parentKey": null
+      },
+      "city": "Gdańsk",
+      "street": "Kołobrzeska 32",
+      "latitude": 54.4026557,
+      "longitude": 18.5880926,
+      "isRemoteInterview": false,
+      "companyName": "POSTDATA",
+      "companyLogoThumbUrl": "https://imgproxy.justjoinit.tech/jFxVWzb2kv3XCmE0zVQ9A3UJNlSL6voi4PHVuSX3Q2g/h:200/w:200/plain/https://public.justjoin.it/companies/logos/original/0b4bf840b8564bfd89699f0f88f3b2e1657d2574.png",
+      "publishedAt": "2026-08-07T08:40:18.377Z",
+      "isOpenToHireUkrainians": false,
+      "locations": [
+        {
+          "city": "Gdańsk",
+          "street": "Kołobrzeska 32",
+          "latitude": 54.4026557,
+          "longitude": 18.5880926,
+          "slug": "postdata-starszy-tester-starsza-testerka-oprogramowania-playwright-cypress--gdansk-testing"
+        }
+      ],
+      "employmentTypes": [
+        {
+          "from": null,
+          "fromPerUnit": null,
+          "to": null,
+          "toPerUnit": null,
+          "currency": "USD",
+          "currencySource": "conversion",
+          "type": "permanent",
+          "unit": "month",
+          "gross": true
+        },
+        {
+          "from": null,
+          "fromPerUnit": null,
+          "to": null,
+          "toPerUnit": null,
+          "currency": "GBP",
+          "currencySource": "conversion",
+          "type": "b2b",
+          "unit": "month",
+          "gross": false
+        },
+        {
+          "from": null,
+          "fromPerUnit": null,
+          "to": null,
+          "toPerUnit": null,
+          "currency": "USD",
+          "currencySource": "conversion",
+          "type": "b2b",
+          "unit": "month",
+          "gross": false
+        },
+        {
+          "from": null,
+          "fromPerUnit": null,
+          "to": null,
+          "toPerUnit": null,
+          "currency": "EUR",
+          "currencySource": "conversion",
+          "type": "permanent",
+          "unit": "month",
+          "gross": true
+        },
+        {
+          "from": null,
+          "fromPerUnit": null,
+          "to": null,
+          "toPerUnit": null,
+          "currency": "GBP",
+          "currencySource": "conversion",
+          "type": "permanent",
+          "unit": "month",
+          "gross": true
+        },
+        {
+          "from": null,
+          "fromPerUnit": null,
+          "to": null,
+          "toPerUnit": null,
+          "currency": "CHF",
+          "currencySource": "conversion",
+          "type": "b2b",
+          "unit": "month",
+          "gross": false
+        },
+        {
+          "from": null,
+          "fromPerUnit": null,
+          "to": null,
+          "toPerUnit": null,
+          "currency": "EUR",
+          "currencySource": "conversion",
+          "type": "b2b",
+          "unit": "month",
+          "gross": false
+        },
+        {
+          "from": null,
+          "fromPerUnit": null,
+          "to": null,
+          "toPerUnit": null,
+          "currency": "CHF",
+          "currencySource": "conversion",
+          "type": "permanent",
+          "unit": "month",
+          "gross": true
+        },
+        {
+          "from": null,
+          "fromPerUnit": null,
+          "to": null,
+          "toPerUnit": null,
+          "currency": "PLN",
+          "currencySource": "original",
+          "type": "permanent",
+          "unit": "month",
+          "gross": true
+        },
+        {
+          "from": null,
+          "fromPerUnit": null,
+          "to": null,
+          "toPerUnit": null,
+          "currency": "PLN",
+          "currencySource": "original",
+          "type": "b2b",
+          "unit": "month",
+          "gross": false
+        }
+      ],
+      "requiredSkills": [
+        {
+          "name": "Playwright",
+          "level": 3
+        },
+        {
+          "name": "Cypress",
+          "level": 3
+        },
+        {
+          "name": "SQL",
+          "level": 3
+        },
+        {
+          "name": "Testing",
+          "level": 4
+        },
+        {
+          "name": "E-commerce",
+          "level": 1
+        },
+        {
+          "name": "API",
+          "level": 3
+        }
+      ],
+      "niceToHaveSkills": [],
+      "languages": [],
+      "isPromoted": false,
+      "isSuperOffer": false,
+      "applyMethod": "external",
+      "applyUrl": "https://postdata.elementapp.ai/application/v2/57233921-7781-46a3-aeff-48aa56fab82e/2457cdc5-5516-48ea-bb4b-d4a14c5484c6?source=332ed5ad-609f-49be-abfc-806c494b48e6",
+      "lastPublishedAt": "2026-07-17T11:37:49.730513Z",
+      "expiredAt": "2026-08-16T11:37:49.730513Z",
+      "hybridWorkSchedule": null
+    }
+  ],
+  "meta": {
+    "from": 0,
+    "totalItems": 3,
+    "prev": {
+      "cursor": null,
+      "itemsCount": 3
+    },
+    "next": {
+      "cursor": null,
+      "itemsCount": 3
+    }
+  }
+}
