@@ -7,8 +7,12 @@ from scrapper.models import Job, RawJob
 SOURCE_PRIORITY = {"nofluffjobs": 50, "justjoinit": 40}
 COMPANY_PRIORITY = 100
 
+# Transliteracja znaków, które NFKD nie rozkłada kanonicznie (np. Ł, ł).
+TRANSLITERATION = str.maketrans({"ł": "l", "Ł": "L", "ø": "o", "Ø": "O", "đ": "d", "Đ": "D"})
+
 # Sufiksy form prawnych — 'Acme' i 'Acme Sp. z o.o.' to ta sama firma.
-LEGAL_SUFFIXES = ("sp z o o", "sp z oo", "sa", "sp j", "sp k", "z o o")
+# Rozszerzono o warianty rozspacjowane powstające po _slug (np. 's a' z 'S.A.').
+LEGAL_SUFFIXES = ("sp z o o", "sp z oo", "sa", "s a", "sp j", "sp k", "z o o")
 
 
 def priority_of(source: str) -> int:
@@ -18,7 +22,9 @@ def priority_of(source: str) -> int:
 
 
 def _slug(value: str) -> str:
-    normalized = unicodedata.normalize("NFKD", value)
+    # Transliteruj znaki bez kanonicznego rozkładu NFKD, zanim normalizujesz.
+    transliterated = value.translate(TRANSLITERATION)
+    normalized = unicodedata.normalize("NFKD", transliterated)
     ascii_only = normalized.encode("ascii", "ignore").decode("ascii")
     cleaned = re.sub(r"[^a-z0-9]+", " ", ascii_only.casefold()).strip()
     return re.sub(r"\s+", "-", cleaned)

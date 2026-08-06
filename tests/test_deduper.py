@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from scrapper.deduper import dedup_key, deduplicate, priority_of
+from scrapper.deduper import _company_slug, dedup_key, deduplicate, priority_of
 from scrapper.models import RawJob
 
 NOW = datetime(2026, 8, 6, 12, 0, tzinfo=timezone.utc)
@@ -80,3 +80,36 @@ def test_deduplicate_sets_first_seen():
     result = deduplicate([_job()], NOW)
 
     assert result[0].first_seen == NOW
+
+
+def test_lodz_and_lodz_transliteration_produce_same_key():
+    """Łódź (Polish spelling) and Lodz (transliterated) should produce same key."""
+    a = dedup_key(_job(company="Acme", city="Łódź"))
+    b = dedup_key(_job(company="Acme", city="Lodz"))
+
+    assert a == b
+
+
+def test_company_with_sa_dots_and_without_suffix_produce_same_key():
+    """Acme S.A. (with dots) should produce same key as Acme."""
+    a = dedup_key(_job(company="Acme S.A."))
+    b = dedup_key(_job(company="Acme"))
+
+    assert a == b
+
+
+def test_company_sp_z_oo_and_without_suffix_produce_same_key():
+    """Acme Sp. z o.o. should produce same key as Acme (regression test)."""
+    a = dedup_key(_job(company="Acme Sp. z o.o."))
+    b = dedup_key(_job(company="Acme"))
+
+    assert a == b
+
+
+def test_company_slug_sa_is_not_empty_and_differs_from_acme():
+    """Company named 'SA' should not reduce to empty string, and differ from 'Acme'."""
+    sa_slug = _company_slug("SA")
+    acme_slug = _company_slug("Acme")
+
+    assert sa_slug != ""
+    assert sa_slug != acme_slug
