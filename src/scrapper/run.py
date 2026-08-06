@@ -48,8 +48,19 @@ def run(config: Config, sources: list[Source], store_path: Path, client,
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     config = load_config(CONFIG_PATH, env=os.environ)
+
+    # Unia lokalizacji ze wszystkich profili — źródło ma pobrać pulę realnie
+    # obejmującą miasta, którymi interesują się profile (samo źródło nie zna
+    # reguł filtrowania, więc dostaje tylko listę miast, nie cały profil).
+    cities: list[str] = []
+    for profile in config.profiles:
+        for location in profile.locations:
+            if location not in cities:
+                cities.append(location)
+
     with build_client() as client:
-        count = run(config, [JustJoinIt()], STORE_PATH, client, datetime.now(timezone.utc))
+        source = JustJoinIt(cities=cities or None)
+        count = run(config, [source], STORE_PATH, client, datetime.now(timezone.utc))
     print(f"nowe_oferty={count}")
 
 

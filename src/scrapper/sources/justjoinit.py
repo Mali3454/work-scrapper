@@ -81,10 +81,88 @@ def parse(payload: dict | list) -> list[RawJob]:
     return jobs
 
 
+_PAGE_SIZE = 100
+
+
+def _fetch_entries_for_city(
+    client: httpx.Client, city: str | None, max_offers: int, page_size: int | None = None
+) -> list[dict]:
+    """Pobiera surowe wpisy `data[]` dla jednego zapytania (miasto albo brak filtra).
+
+    Paginacja przez parametr `from` (nie `cursor` — nazwa parametru z briefu i
+    ze wstępnej wersji `docs/sources.md` była błędna, zweryfikowano na żywym
+    API: patrz `docs/sources.md`). Wartość `meta.next.cursor` z odpowiedzi to
+    liczba, którą trzeba przekazać jako `from` w kolejnym zapytaniu.
+
+    Kończy pobieranie, gdy:
+    - odpowiedź nie ma danych (pusta lista) — koniec wyników,
+    - strona zwróciła mniej wpisów niż żądano — ostatnia strona,
+    - `meta.next.cursor` brak/`None`,
+    - osiągnięto `max_offers`,
+    - kolejna (nie pierwsza) strona zwróci błąd HTTP — API 500-uje przy
+      `from + itemsCount > 10000` (twardy limit okna wyników); traktujemy to
+      jak koniec dostępnych danych zamiast wywalać cały fetch. Błąd pierwszej
+      strony propaguje się dalej — to prawdziwa awaria źródła.
+    """
+    if page_size is None:
+        page_size = _PAGE_SIZE  # odczytane dynamicznie — testowalne przez monkeypatch
+
+    entries: list[dict] = []
+    from_: int | None = None
+
+    while len(entries) < max_offers:
+        remaining = max_offers - len(entries)
+        items_count = min(page_size, remaining)
+        params: dict = {"itemsCount": items_count}
+        if from_ is not None:
+            params["from"] = from_
+        if city:
+            params["city"] = city
+
+        try:
+            response = client.get(API_URL, params=params)
+            response.raise_for_status()
+        except httpx.HTTPError:
+            if from_ is None:
+                raise
+            break
+
+        payload = response.json()
+        page_entries = (payload.get("data") or []) if isinstance(payload, dict) else []
+        if not page_entries:
+            break
+        entries.extend(page_entries)
+
+        if len(page_entries) < items_count:
+            break
+
+        cursor = ((payload.get("meta") or {}).get("next") or {}).get("cursor")
+        if cursor is None:
+            break
+        from_ = cursor
+
+    return entries[:max_offers]
+
+
 class JustJoinIt:
     name = "justjoinit"
 
+    def __init__(self, max_offers: int = 1000, cities: list[str] | None = None):
+        self.max_offers = max_offers
+        self.cities = cities
+
     def fetch(self, client: httpx.Client) -> list[RawJob]:
-        response = client.get(API_URL, params={"itemsCount": 100})
-        response.raise_for_status()
-        return parse(response.json())
+        queries = self.cities if self.cities else [None]
+
+        seen_guids: set[str] = set()
+        merged_entries: list[dict] = []
+        for city in queries:
+            for entry in _fetch_entries_for_city(client, city, self.max_offers):
+                guid = entry.get("guid")
+                if guid:
+                    if guid in seen_guids:
+                        continue
+                    seen_guids.add(guid)
+                merged_entries.append(entry)
+
+        return parse({"data": merged_entries})

@@ -2,6 +2,9 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+import httpx
+
+from scrapper.sources import justjoinit as jj
 from scrapper.sources.justjoinit import JustJoinIt, parse
 
 FIXTURE = Path(__file__).parent / "fixtures" / "justjoinit.json"
@@ -263,3 +266,164 @@ def test_entries_missing_guid_or_slug_are_skipped_others_still_parsed():
 
 def test_parse_handles_null_data():
     assert parse({"data": None}) == []
+
+
+# --- Fetch/paginacja/multi-miasto: atrapy klienta, bez sieci -------------------
+
+
+def _entry(guid: str, slug: str | None = None, city: str = "Warszawa") -> dict:
+    slug = slug or guid
+    return {
+        "guid": guid,
+        "slug": slug,
+        "title": f"Title {guid}",
+        "companyName": "Co",
+        "city": city,
+        "workplaceType": "office",
+        "publishedAt": "2026-08-06T10:00:00.000Z",
+        "employmentTypes": [],
+    }
+
+
+class _FakeResponse:
+    def __init__(self, payload: dict, status_code: int = 200):
+        self._payload = payload
+        self.status_code = status_code
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise httpx.HTTPStatusError(
+                f"status {self.status_code}",
+                request=httpx.Request("GET", jj.API_URL),
+                response=self,
+            )
+
+    def json(self):
+        return self._payload
+
+
+class _FakeClient:
+    """Atrapa httpx.Client — kolejkuje odpowiedzi per miasto (klucz `_global_`
+    gdy zapytanie bez `city`), zlicza wywołania i przekazane parametry."""
+
+    def __init__(self, pages_by_city: dict[str, list[_FakeResponse]]):
+        self._queues = {key: list(pages) for key, pages in pages_by_city.items()}
+        self.calls: list[tuple[str, dict]] = []
+
+    def get(self, url, params=None):
+        params = dict(params or {})
+        self.calls.append((url, params))
+        key = params.get("city") or "_global_"
+        queue = self._queues.get(key)
+        if not queue:
+            return _FakeResponse({"data": [], "meta": {"next": {"cursor": None}}})
+        return queue.pop(0)
+
+
+def test_fetch_paginates_and_merges_pages(monkeypatch):
+    monkeypatch.setattr(jj, "_PAGE_SIZE", 2)
+    page1 = _FakeResponse({"data": [_entry("g1"), _entry("g2")], "meta": {"next": {"cursor": 2}}})
+    page2 = _FakeResponse({"data": [_entry("g3")], "meta": {"next": {"cursor": None}}})
+    client = _FakeClient({"_global_": [page1, page2]})
+
+    jobs = JustJoinIt(max_offers=1000).fetch(client)
+
+    assert {job.external_id for job in jobs} == {"g1", "g2", "g3"}
+    assert len(client.calls) == 2
+
+
+def test_max_offers_stops_pagination_despite_cursor_continuing(monkeypatch):
+    monkeypatch.setattr(jj, "_PAGE_SIZE", 2)
+    page1 = _FakeResponse({"data": [_entry("g1"), _entry("g2")], "meta": {"next": {"cursor": 2}}})
+    page2 = _FakeResponse({"data": [_entry("g3"), _entry("g4")], "meta": {"next": {"cursor": 4}}})
+    client = _FakeClient({"_global_": [page1, page2]})
+
+    jobs = JustJoinIt(max_offers=3).fetch(client)
+
+    assert len(jobs) == 3
+    assert len(client.calls) == 2  # nie sięgnęliśmy po trzecią stronę mimo cursor=4
+
+
+def test_duplicate_guid_across_pages_appears_once(monkeypatch):
+    monkeypatch.setattr(jj, "_PAGE_SIZE", 2)
+    page1 = _FakeResponse({"data": [_entry("dup"), _entry("g2")], "meta": {"next": {"cursor": 2}}})
+    page2 = _FakeResponse({"data": [_entry("dup"), _entry("g3")], "meta": {"next": {"cursor": None}}})
+    client = _FakeClient({"_global_": [page1, page2]})
+
+    jobs = JustJoinIt(max_offers=1000).fetch(client)
+
+    ids = [job.external_id for job in jobs]
+    assert ids.count("dup") == 1
+    assert len(jobs) == 3
+
+
+def test_duplicate_guid_across_cities_appears_once():
+    page_szczecin = _FakeResponse(
+        {
+            "data": [_entry("dup", city="Szczecin"), _entry("s2", city="Szczecin")],
+            "meta": {"next": {"cursor": None}},
+        }
+    )
+    page_gdansk = _FakeResponse(
+        {
+            "data": [_entry("dup", city="Gdańsk"), _entry("g2", city="Gdańsk")],
+            "meta": {"next": {"cursor": None}},
+        }
+    )
+    client = _FakeClient({"szczecin": [page_szczecin], "gdansk": [page_gdansk]})
+
+    jobs = JustJoinIt(cities=["szczecin", "gdansk"]).fetch(client)
+
+    ids = [job.external_id for job in jobs]
+    assert ids.count("dup") == 1
+    assert len(jobs) == 3
+
+
+def test_cities_list_triggers_query_per_city():
+    def _empty_page():
+        return _FakeResponse({"data": [], "meta": {"next": {"cursor": None}}})
+
+    client = _FakeClient({"szczecin": [_empty_page()], "gdansk": [_empty_page()]})
+
+    JustJoinIt(cities=["szczecin", "gdansk"]).fetch(client)
+
+    requested_cities = [params.get("city") for _, params in client.calls]
+    assert requested_cities == ["szczecin", "gdansk"]
+
+
+def test_cities_none_makes_single_query_without_city_param():
+    client = _FakeClient({"_global_": [_FakeResponse({"data": [], "meta": {"next": {"cursor": None}}})]})
+
+    JustJoinIt(cities=None).fetch(client)
+
+    assert len(client.calls) == 1
+    assert "city" not in client.calls[0][1]
+
+
+def test_empty_response_ends_pagination_without_looping():
+    client = _FakeClient({"_global_": [_FakeResponse({"data": [], "meta": {"next": {"cursor": None}}})]})
+
+    jobs = JustJoinIt(max_offers=1000).fetch(client)
+
+    assert jobs == []
+    assert len(client.calls) == 1
+
+
+def test_subsequent_page_http_error_ends_pagination_gracefully(monkeypatch):
+    monkeypatch.setattr(jj, "_PAGE_SIZE", 2)
+    page1 = _FakeResponse({"data": [_entry("g1"), _entry("g2")], "meta": {"next": {"cursor": 2}}})
+    page2 = _FakeResponse({}, status_code=500)
+    client = _FakeClient({"_global_": [page1, page2]})
+
+    jobs = JustJoinIt(max_offers=1000).fetch(client)
+
+    assert len(jobs) == 2
+
+
+def test_first_page_http_error_propagates():
+    import pytest
+
+    client = _FakeClient({"_global_": [_FakeResponse({}, status_code=500)]})
+
+    with pytest.raises(httpx.HTTPStatusError):
+        JustJoinIt().fetch(client)

@@ -15,10 +15,29 @@ publicznie, ustalone eksperymentalnie):
   filtr — miasta inne niż podane też się pojawiają), np. `city=szczecin`.
 - `itemsCount=<liczba>` — rozmiar strony (domyślnie 10, przetestowano do 100).
 
-Paginacja kursorowa: odpowiedź zawiera `meta.next.cursor`, który wg wszystkiego
-wskazuje trzeba przekazać jako `cursor=<wartość>` w kolejnym zapytaniu (nie
-testowano — Task 9 może to zweryfikować przy pisaniu parsera, jeśli będzie
-potrzebna paginacja).
+**Paginacja — zweryfikowana empirycznie w Task 9 (poprawka względem
+wcześniejszego założenia w tym dokumencie):** parametr `cursor=<wartość>`
+NIE działa — przekazanie go w query string jest po cichu ignorowane, serwer
+zwraca dokładnie tę samą pierwszą stronę. Prawdziwy parametr paginacji to
+**`from=<liczba>`** (offset, nie token nieprzezroczysty). Wartość
+`meta.next.cursor` z odpowiedzi to liczba, którą trzeba podstawić jako
+`from` w kolejnym zapytaniu — nazwa `cursor` w kluczu odpowiedzi jest myląca
+(sugeruje kursor kryty, a to zwykły offset), ale mechanizm nawigacji nią jest
+poprawny.
+
+Zweryfikowano sekwencję `from=None → 0, 5, 10, 15 …` — kolejne strony
+zwracają rozłączne zestawy `guid`, więc offset faktycznie przesuwa okno.
+
+**Twardy limit okna wyników — pułapka przy dużym `max_offers`:** API zwraca
+`meta.totalItems: 10000` niezależnie od faktycznej liczby ofert (wygląda na
+domyślny limit okna wyszukiwarki pełnotekstowej, np. Elasticsearch
+`max_result_window`). Żądania, w których `from + itemsCount > 10000`, kończą
+się **HTTP 500** (`Internal Server Error`), a NIE pustą listą i NIE
+`cursor: null` — `meta.next.cursor` rośnie bez końca aż do tej granicy, nigdy
+nie sygnalizując końca danych samodzielnie. Task 9 obsługuje to tak: błąd HTTP
+na drugiej i kolejnych stronach jest traktowany jako koniec dostępnych danych
+(pobieranie kończy się z tym, co już zebrano), a nie jako awaria całego
+źródła — błąd na pierwszej stronie nadal propaguje się jako prawdziwa awaria.
 
 **Uwaga — jak do tego doszedłem:** próby oczywistych kandydatów
 (`api.justjoin.it/v2/user-panel/offers`, `api.justjoin.it/v2/offers`,
