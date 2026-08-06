@@ -1,0 +1,14 @@
+smtp:
+  host: smtp.gmail.com
+  port: 587
+  user: ${SMTP_USER}
+  password: ${SMTP_PASSWORD}
+  to: olosolo16@gmail.com
+
+profiles:
+  - name: frontend-szczecin
+    keywords: [frontend, react]
+    exclude: [senior]
+    locations: [szczecin]
+    include_remote: true
+    max_age_days: 14
