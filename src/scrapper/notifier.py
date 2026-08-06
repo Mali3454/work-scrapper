@@ -10,11 +10,29 @@ from scrapper.sources.base import SourceResult
 TEMPLATE_DIR = Path(__file__).resolve().parents[2] / "templates"
 
 
+def _safe_url(url: str | None) -> str:
+    """Przepuszcza wyłącznie adresy http(s), resztę zamienia na pusty string.
+
+    URL-e pochodzą z zewnętrznych API, których nie kontrolujemy. Autoescaping
+    Jinja2 chroni przed wstrzyknięciem znaczników HTML, ale nie waliduje
+    schematu — `javascript:...` nie zawiera żadnego znaku specjalnego HTML,
+    więc trafiłby do `href` bez zmian. To osobna warstwa obrony.
+    """
+    if not url:
+        return ""
+    normalized = url.strip().lower()
+    if normalized.startswith("http://") or normalized.startswith("https://"):
+        return url.strip()
+    return ""
+
+
 def _environment() -> Environment:
-    return Environment(
+    env = Environment(
         loader=FileSystemLoader(TEMPLATE_DIR),
         autoescape=select_autoescape(["html", "j2"]),
     )
+    env.filters["safe_url"] = _safe_url
+    return env
 
 
 def render(jobs: list[Job], warnings: list[str]) -> str:

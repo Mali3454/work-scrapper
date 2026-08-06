@@ -100,6 +100,42 @@ def test_warnings_from_silent_on_healthy_source():
     assert warnings_from(results) == []
 
 
+def test_render_escapes_script_tag_in_title():
+    html = render([_job(title="<script>alert(1)</script>")], warnings=[])
+
+    assert "<script>" not in html
+    assert "&lt;script&gt;" in html
+
+
+def test_render_escapes_html_injection_in_company():
+    html = render([_job(company='"><img src=x onerror=alert(1)>')], warnings=[])
+
+    assert "<img" not in html
+
+
+def test_render_strips_javascript_url_but_keeps_title():
+    html = render([_job(url="javascript:alert(1)")], warnings=[])
+
+    assert "javascript:" not in html
+    assert "Frontend Developer" in html
+
+
+def test_render_strips_javascript_alt_url_but_keeps_safe_one():
+    html = render(
+        [_job(alt_urls=["javascript:alert(1)", "https://example.com/ok"])],
+        warnings=[],
+    )
+
+    assert "javascript:" not in html
+    assert "https://example.com/ok" in html
+
+
+def test_render_keeps_normal_https_link_working():
+    html = render([_job(url="https://justjoin.it/1")], warnings=[])
+
+    assert 'href="https://justjoin.it/1"' in html
+
+
 def test_send_uses_tls_login_and_sends(monkeypatch):
     FakeSMTP.instances.clear()
 
