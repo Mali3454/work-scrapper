@@ -116,11 +116,49 @@ tej nowej formy).
 | `title` | `title` | bez zmian |
 | `companyName` | `company` | bez zmian |
 | `city` | `city` | string z polskimi znakami (UTF-8, poprawnie zdekodowany w JSON); `None`/brak nie zaobserwowano w próbce, ale traktować jako opcjonalne |
-| `workplaceType == "remote"` | `remote` | `remote` → `True`; `office` i `hybrid` → `False`. Brak osobnej flagi bool w API — trzeba wyprowadzić z tego pola tekstowego |
+| `workplaceType == "remote"` | `remote` | `remote` → `True`; `office` i `hybrid` → `False`. Brak osobnej flagi bool w API — trzeba wyprowadzić z tego pola tekstowego. **Uwaga:** wariant `"hybrid"` NIE występuje w żadnej z 3 ofert fixture'a — gałąź `hybrid → False` jest w regule udokumentowana, ale nie pokryta przykładem w fixture. Task 9 powinien dodać osobny test jednostkowy na tę wartość zamiast polegać na fixture. |
 | `slug` (zbudowany URL) | `url` | **W API NIE MA gotowego URL-a do oferty.** Trzeba zbudować: `f"https://justjoin.it/job-offer/{slug}"`. `applyUrl` to inny link (zewnętrzny formularz aplikacyjny danej firmy) — NIE używać go jako `url` |
-| `employmentTypes[]` (wpis z `currency == "PLN"` i `currencySource == "original"`) | `salary` | API nie zwraca jednego gotowego stringa z widełkami — trzeba go zbudować z `from`/`to`/`currency`/`unit`/`type` (np. B2B/permanent) wybranego wpisu. Rekomendacja dla Task 9: wybrać wpis z `currencySource == "original"` (kwota podana przez firmę, nie automatyczne przeliczenie kursowe) i sformatować np. `"26000–31000 PLN/miesiąc (B2B)"`. **Gdy wszystkie wpisy mają `from` i `to` równe `null` — brak widełek — `salary` powinno być `None`** (patrz fixture: oferty "Grid Converter Control Engineer" i "Starszy Tester..." nie mają podanych widełek w żadnej walucie) |
+| `employmentTypes[]` (wybrany wg reguły niżej) | `salary` | API nie zwraca jednego gotowego stringa z widełkami — trzeba go zbudować z `from`/`to`/`currency`/`unit`/`type` wybranego wpisu. Patrz **"Reguła wyboru wpisu wynagrodzenia"** poniżej — jest wiążąca dla Task 9, nie tylko rekomendacją. |
 | `publishedAt` | `posted_at` | ISO 8601 z Z (UTC), parsowalne wprost przez `datetime.fromisoformat` (Python 3.11+) po zamianie `Z` na `+00:00`, lub przez `dateutil`. Pole ISTNIEJE i jest zawsze wypełnione w próbce — brak `None` nie zaobserwowano |
 | — (stała) | `source` | brak odpowiednika w API — Task 9 ustawia na stałą wartość identyfikującą źródło, np. `"justjoinit"` |
+
+### Reguła wyboru wpisu wynagrodzenia (wiążąca dla Task 9)
+
+Oferta „Starszy Tester/Starsza Testerka…" w fixture ma DWA wpisy
+`employmentTypes[]` z `currencySource == "original"` jednocześnie: jeden
+`type: "permanent"`, drugi `type: "b2b"`. W tym konkretnym przypadku oba mają
+`from`/`to` równe `null`, więc wynik wychodzi ten sam niezależnie od wyboru —
+ale to nie jest ogólna gwarancja. Przy ofercie z dwoma różnymi, faktycznie
+wypełnionymi widełkami (np. inne dla B2B i inne dla umowy o pracę), naiwny
+wybór „pierwszego pasującego" zależałby od kolejności elementów w tablicy
+zwróconej przez API — a ta kolejność nie jest nigdzie udokumentowana ani
+gwarantowana jako stabilna.
+
+Wiążąca reguła dla Task 9:
+
+> Spośród wpisów `employmentTypes[]` bierz pod uwagę wyłącznie te z
+> `currencySource == "original"` (kwoty podane przez firmę, nie przeliczenia
+> kursowe) i z niepustymi `from` oraz `to`. Jeśli pasuje więcej niż jeden,
+> wybierz według priorytetu typu umowy: `b2b`, potem `permanent`, potem
+> pozostałe. Jeśli w ramach tego samego typu jest kilka wpisów, weź pierwszy.
+> Jeśli żaden wpis nie ma wypełnionych `from` i `to`, `salary` wynosi `None`.
+
+Uzasadnienie priorytetu B2B: to dominująca forma zatrudnienia w polskich
+ofertach IT, i to te widełki są zwykle porównywalne między różnymi ofertami.
+
+Przykład formatu wynikowego stringa (nieregulowany ściśle, do ustalenia w
+Task 9): `"26000–31000 PLN/miesiąc (B2B)"`. Gdy wszystkie wpisy mają `from` i
+`to` równe `null` (brak widełek) — `salary` powinno być `None` (patrz fixture:
+oferty „Grid Converter Control Engineer" i „Starszy Tester…" nie mają
+podanych widełek w żadnej walucie/typie umowy).
+
+**Ostrzeżenie o wielkości liter:** wartości tekstowe pól `unit` i `type` NIE
+są konsekwentne w API. W samym fixture występuje zarówno `"unit": "Month"`
+(oferta „Senior .Net Developer") jak i `"unit": "month"` (pozostałe dwie
+oferty). Proste porównanie `unit == "month"` przepuści wariant z wielką
+literą niezauważenie. Task 9 musi porównywać wartości `unit` i `type`
+bez uwzględniania wielkości liter, np. `value.casefold() == "month"` /
+`value.casefold() == "b2b"`, a nie surowym `==`.
 
 ### Pola, których NIE MA w odpowiedzi (żeby Task 9 nie szukał ich po omacku)
 
