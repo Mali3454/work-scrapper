@@ -216,3 +216,50 @@ def test_salary_unit_and_type_comparison_is_case_insensitive():
     job = parse(payload)[0]
 
     assert job.salary is not None
+    assert "(B2B)" in job.salary
+    assert "/miesiąc" in job.salary
+
+
+def test_entries_missing_guid_or_slug_are_skipped_others_still_parsed():
+    payload = {
+        "data": [
+            {
+                "guid": None,
+                "slug": "no-guid-offer",
+                "title": "No Guid Offer",
+                "companyName": "NoGuidCo",
+                "city": "Łódź",
+                "workplaceType": "office",
+                "publishedAt": "2026-08-06T10:00:00.000Z",
+                "employmentTypes": [],
+            },
+            {
+                "guid": "guid-no-slug",
+                "slug": None,
+                "title": "No Slug Offer",
+                "companyName": "NoSlugCo",
+                "city": "Łódź",
+                "workplaceType": "office",
+                "publishedAt": "2026-08-06T10:00:00.000Z",
+                "employmentTypes": [],
+            },
+            {
+                "guid": "guid-valid",
+                "slug": "valid-offer",
+                "title": "Valid Offer",
+                "companyName": "ValidCo",
+                "city": "Łódź",
+                "workplaceType": "office",
+                "publishedAt": "2026-08-06T10:00:00.000Z",
+                "employmentTypes": [],
+            },
+        ]
+    }
+    jobs = parse(payload)
+
+    assert len(jobs) == 1
+    assert jobs[0].external_id == "guid-valid"
+
+
+def test_parse_handles_null_data():
+    assert parse({"data": None}) == []

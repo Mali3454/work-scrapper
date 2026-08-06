@@ -58,7 +58,7 @@ def _salary(entry: dict) -> str | None:
 
 
 def parse(payload: dict | list) -> list[RawJob]:
-    entries = payload.get("data", []) if isinstance(payload, dict) else payload
+    entries = (payload.get("data") or []) if isinstance(payload, dict) else payload
     jobs = []
     for entry in entries:
         guid = entry.get("guid")
