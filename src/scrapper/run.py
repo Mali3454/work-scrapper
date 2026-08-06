@@ -8,7 +8,7 @@ from pathlib import Path
 from scrapper.config import load_config
 from scrapper.deduper import deduplicate
 from scrapper.matcher import filter_jobs
-from scrapper.models import Config
+from scrapper.models import Config, Profile
 from scrapper.notifier import render, send, subject_for, warnings_from
 from scrapper.sources.base import Source, build_client, collect
 from scrapper.sources.justjoinit import JustJoinIt
@@ -45,21 +45,34 @@ def run(config: Config, sources: list[Source], store_path: Path, client,
     return len(new_jobs)
 
 
+def cities_from_profiles(profiles: list[Profile]) -> list[str] | None:
+    """Unia lokalizacji ze wszystkich profili — źródło ma pobrać pulę realnie
+    obejmującą miasta, którymi interesują się profile (samo źródło nie zna
+    reguł filtrowania, więc dostaje tylko listę miast, nie cały profil).
+
+    Deduplikacja bez uwzględniania wielkości liter (`"Szczecin"` i
+    `"szczecin"` to dla API to samo miasto) — zachowuje pierwszy napotkany
+    zapis i stabilną kolejność.
+    """
+    cities: list[str] = []
+    seen_normalized: set[str] = set()
+    for profile in profiles:
+        for location in profile.locations:
+            key = location.casefold()
+            if key in seen_normalized:
+                continue
+            seen_normalized.add(key)
+            cities.append(location)
+    return cities or None
+
+
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     config = load_config(CONFIG_PATH, env=os.environ)
-
-    # Unia lokalizacji ze wszystkich profili — źródło ma pobrać pulę realnie
-    # obejmującą miasta, którymi interesują się profile (samo źródło nie zna
-    # reguł filtrowania, więc dostaje tylko listę miast, nie cały profil).
-    cities: list[str] = []
-    for profile in config.profiles:
-        for location in profile.locations:
-            if location not in cities:
-                cities.append(location)
+    cities = cities_from_profiles(config.profiles)
 
     with build_client() as client:
-        source = JustJoinIt(cities=cities or None)
+        source = JustJoinIt(cities=cities)
         count = run(config, [source], STORE_PATH, client, datetime.now(timezone.utc))
     print(f"nowe_oferty={count}")
 

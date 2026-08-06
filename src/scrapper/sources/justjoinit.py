@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 
 import httpx
@@ -5,8 +6,14 @@ import httpx
 from scrapper.models import RawJob
 from scrapper.sources.base import Source  # noqa: F401 - dokumentuje implementowany protokół
 
+logger = logging.getLogger(__name__)
+
 API_URL = "https://justjoin.it/api/candidate-api/offers"
 OFFER_URL = "https://justjoin.it/job-offer/{slug}"
+
+# Twardy limit okna wyników API (patrz docs/sources.md) — żądania z
+# from + itemsCount > _WINDOW_LIMIT kończą się HTTP 500.
+_WINDOW_LIMIT = 10000
 
 # Priorytet typu umowy przy wyborze wpisu wynagrodzenia (patrz docs/sources.md).
 _TYPE_PRIORITY = ("b2b", "permanent")
@@ -99,10 +106,16 @@ def _fetch_entries_for_city(
     - strona zwróciła mniej wpisów niż żądano — ostatnia strona,
     - `meta.next.cursor` brak/`None`,
     - osiągnięto `max_offers`,
-    - kolejna (nie pierwsza) strona zwróci błąd HTTP — API 500-uje przy
-      `from + itemsCount > 10000` (twardy limit okna wyników); traktujemy to
-      jak koniec dostępnych danych zamiast wywalać cały fetch. Błąd pierwszej
-      strony propaguje się dalej — to prawdziwa awaria źródła.
+    - kolejna (nie pierwsza) strona zwróci błąd HTTP. Tu rozróżniamy dwa
+      przypadki: znany, łagodny limit okna wyników (`HTTPStatusError` 500 przy
+      `from + itemsCount > _WINDOW_LIMIT`) kończy paginację po cichu
+      (`logger.debug`) — to oczekiwane zachowanie API, nie awaria. Każdy inny
+      błąd HTTP (przeciążenie 502/503, timeout, cokolwiek innego) też kończy
+      paginację dla tego miasta, ale głośno — `logger.warning` z nazwą
+      miasta i offsetem — bo to realna, cicha utrata części danych, o której
+      wywołujący (i finalnie użytkownik) musi się dowiedzieć. Błąd na
+      pierwszej stronie w obu gałęziach propaguje się dalej bez zmian — to
+      całkowita awaria źródła, łapana przez `collect()`.
     """
     if page_size is None:
         page_size = _PAGE_SIZE  # odczytane dynamicznie — testowalne przez monkeypatch
@@ -122,9 +135,35 @@ def _fetch_entries_for_city(
         try:
             response = client.get(API_URL, params=params)
             response.raise_for_status()
-        except httpx.HTTPError:
+        except httpx.HTTPStatusError as exc:
             if from_ is None:
                 raise
+            is_window_limit = (
+                exc.response is not None
+                and exc.response.status_code == 500
+                and from_ + items_count > _WINDOW_LIMIT
+            )
+            if is_window_limit:
+                logger.debug(
+                    "justjoinit: limit okna wyników API osiągnięty (miasto=%s, from=%d, "
+                    "itemsCount=%d) — kończę paginację",
+                    city, from_, items_count,
+                )
+            else:
+                logger.warning(
+                    "justjoinit: błąd HTTP przy pobieraniu kolejnej strony (miasto=%s, "
+                    "from=%d): %s — zwracam to, co udało się już zebrać (%d wpisów)",
+                    city, from_, exc, len(entries),
+                )
+            break
+        except httpx.HTTPError as exc:
+            if from_ is None:
+                raise
+            logger.warning(
+                "justjoinit: błąd sieci przy pobieraniu kolejnej strony (miasto=%s, "
+                "from=%d): %s — zwracam to, co udało się już zebrać (%d wpisów)",
+                city, from_, exc, len(entries),
+            )
             break
 
         payload = response.json()
@@ -147,7 +186,7 @@ def _fetch_entries_for_city(
 class JustJoinIt:
     name = "justjoinit"
 
-    def __init__(self, max_offers: int = 1000, cities: list[str] | None = None):
+    def __init__(self, max_offers: int = 2000, cities: list[str] | None = None):
         self.max_offers = max_offers
         self.cities = cities
 
@@ -156,8 +195,17 @@ class JustJoinIt:
 
         seen_guids: set[str] = set()
         merged_entries: list[dict] = []
-        for city in queries:
-            for entry in _fetch_entries_for_city(client, city, self.max_offers):
+        for index, city in enumerate(queries):
+            remaining_budget = self.max_offers - len(merged_entries)
+            if remaining_budget <= 0:
+                logger.warning(
+                    "justjoinit: max_offers=%d wyczerpany po %d/%d miastach — "
+                    "pomijam pozostałe (%s); rozważ podniesienie limitu",
+                    self.max_offers, index, len(queries), queries[index:],
+                )
+                break
+
+            for entry in _fetch_entries_for_city(client, city, remaining_budget):
                 guid = entry.get("guid")
                 if guid:
                     if guid in seen_guids:

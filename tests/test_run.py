@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 import pytest
 
 from scrapper.models import Config, Profile, RawJob, SmtpConfig
-from scrapper.run import run
+from scrapper.run import cities_from_profiles, run
 from scrapper.store import load_seen
 
 NOW = datetime(2026, 8, 6, 12, 0, tzinfo=timezone.utc)
@@ -138,3 +138,20 @@ def test_job_matching_two_profiles_is_sent_once(tmp_path):
                 client=None, now=NOW, sender=RecordingSender())
 
     assert count == 1
+
+
+def test_cities_from_profiles_deduplicates_case_insensitively():
+    profiles = [
+        Profile(name="a", keywords=["react"], locations=["Szczecin"]),
+        Profile(name="b", keywords=["developer"], locations=["szczecin", "Gdańsk"]),
+    ]
+
+    cities = cities_from_profiles(profiles)
+
+    assert cities == ["Szczecin", "Gdańsk"]
+
+
+def test_cities_from_profiles_returns_none_when_no_locations():
+    profiles = [Profile(name="a", keywords=["react"], locations=[])]
+
+    assert cities_from_profiles(profiles) is None

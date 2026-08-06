@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -427,3 +428,59 @@ def test_first_page_http_error_propagates():
 
     with pytest.raises(httpx.HTTPStatusError):
         JustJoinIt().fetch(client)
+
+
+def test_http_503_on_second_page_returns_partial_results_and_logs_warning(monkeypatch, caplog):
+    monkeypatch.setattr(jj, "_PAGE_SIZE", 2)
+    page1 = _FakeResponse({"data": [_entry("g1"), _entry("g2")], "meta": {"next": {"cursor": 2}}})
+    page2 = _FakeResponse({}, status_code=503)
+    client = _FakeClient({"_global_": [page1, page2]})
+
+    with caplog.at_level(logging.WARNING, logger="scrapper.sources.justjoinit"):
+        jobs = JustJoinIt(max_offers=1000).fetch(client)
+
+    assert len(jobs) == 2
+    warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
+    assert len(warnings) == 1
+    assert "503" in warnings[0].message or "503" in str(warnings[0].args)
+
+
+def test_http_500_at_window_boundary_is_soft_end_without_warning(monkeypatch, caplog):
+    monkeypatch.setattr(jj, "_PAGE_SIZE", 5)
+    # Kursor sztucznie ustawiony blisko limitu okna (10000), żeby wywołać
+    # gałąź "łagodny koniec" bez potrzeby realnie pobierania 10000 wpisów.
+    page1 = _FakeResponse(
+        {"data": [_entry(f"g{i}") for i in range(5)], "meta": {"next": {"cursor": 9998}}}
+    )
+    page2 = _FakeResponse({}, status_code=500)
+    client = _FakeClient({"_global_": [page1, page2]})
+
+    with caplog.at_level(logging.DEBUG, logger="scrapper.sources.justjoinit"):
+        jobs = JustJoinIt(max_offers=1000).fetch(client)
+
+    assert len(jobs) == 5
+    assert not any(r.levelno == logging.WARNING for r in caplog.records)
+    assert any(r.levelno == logging.DEBUG for r in caplog.records)
+
+
+def test_max_offers_caps_total_across_all_cities_not_per_city(monkeypatch):
+    monkeypatch.setattr(jj, "_PAGE_SIZE", 100)
+    page_szczecin_1 = _FakeResponse(
+        {"data": [_entry(f"a{i}") for i in range(100)], "meta": {"next": {"cursor": 100}}}
+    )
+    page_szczecin_2 = _FakeResponse(
+        {"data": [_entry(f"a{i}") for i in range(100, 200)], "meta": {"next": {"cursor": 200}}}
+    )
+    page_gdansk = _FakeResponse(
+        {"data": [_entry(f"b{i}") for i in range(100)], "meta": {"next": {"cursor": 100}}}
+    )
+    client = _FakeClient(
+        {"szczecin": [page_szczecin_1, page_szczecin_2], "gdansk": [page_gdansk]}
+    )
+
+    jobs = JustJoinIt(max_offers=150, cities=["szczecin", "gdansk"]).fetch(client)
+
+    assert len(jobs) <= 150
+    # limit wyczerpał się na pierwszym mieście — drugie w ogóle nie odpytane
+    requested_cities = [params.get("city") for _, params in client.calls]
+    assert "gdansk" not in requested_cities
