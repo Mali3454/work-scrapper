@@ -69,6 +69,10 @@ config.yaml (profile szukania)
 Każde źródło implementuje jeden protokół `fetch(profile) -> List[RawJob]` i łapie
 własne wyjątki. Awaria jednego źródła nie zatrzymuje pozostałych.
 
+W kluczu deduplikacji oferty zdalne bez podanego miasta używają stałej wartości
+`remote` zamiast `city`, żeby ta sama oferta zdalna z dwóch portali nie
+przeszła jako dwie różne.
+
 Deduplikacja następuje **przed** powiadomieniem, żeby ta sama oferta z trzech
 źródeł dała jeden wpis w mailu. Przy konflikcie wygrywa źródło o wyższym
 priorytecie (strona firmy > portal); pozostałe URL-e trafiają do tego samego
@@ -132,6 +136,10 @@ profiles:
     include_remote: true
     max_age_days: 14
 ```
+
+`max_age_days` odrzuca oferty starsze niż podana liczba dni w każdym przebiegu,
+nie tylko pierwszym. Chroni przed zalewem archiwalnych ogłoszeń przy starcie i
+przed ofertami odświeżanymi przez portale po miesiącach.
 
 Obsługa wielu profili jest w kodzie od początku — to jedna pętla po liście, a nie
 osobna funkcjonalność. Zmiana obszaru szukania to edycja YAML-a, nie kodu.
