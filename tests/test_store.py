@@ -65,3 +65,64 @@ def test_second_run_reports_nothing_new(tmp_path):
     second_run = select_new(jobs, load_seen(path))
 
     assert second_run == []
+
+
+def test_load_seen_skips_malformed_json_line(tmp_path):
+    path = tmp_path / "jobs.jsonl"
+    # Write one valid line and one broken line
+    path.write_text(
+        '{"key": "a", "source": "justjoinit"}\n'
+        '{"key": "b"',  # Missing closing brace
+        encoding="utf-8",
+    )
+
+    result = load_seen(path)
+
+    assert result == {"a"}
+
+
+def test_load_seen_skips_json_without_key(tmp_path):
+    path = tmp_path / "jobs.jsonl"
+    # Write one valid line and one without 'key'
+    path.write_text(
+        '{"key": "a", "source": "justjoinit"}\n'
+        '{"source": "justjoinit", "title": "DevOps"}\n',
+        encoding="utf-8",
+    )
+
+    result = load_seen(path)
+
+    assert result == {"a"}
+
+
+def test_load_seen_skips_merge_conflict_lines(tmp_path):
+    path = tmp_path / "jobs.jsonl"
+    # Write valid lines with merge conflict markers
+    path.write_text(
+        '{"key": "a", "source": "justjoinit"}\n'
+        "<<<<<<< HEAD\n"
+        '{"key": "b", "source": "justjoinit"}\n'
+        "=======\n"
+        '{"key": "c", "source": "justjoinit"}\n'
+        ">>>>>>> main\n",
+        encoding="utf-8",
+    )
+
+    result = load_seen(path)
+
+    # Only valid keys should be loaded
+    assert "a" in result
+    assert "HEAD" not in result
+    assert "=======" not in result
+    assert "main" not in result
+
+
+def test_append_uses_unix_newlines(tmp_path):
+    path = tmp_path / "jobs.jsonl"
+
+    append(path, [_job("a")])
+
+    binary_content = path.read_bytes()
+
+    assert b"\n" in binary_content
+    assert b"\r\n" not in binary_content

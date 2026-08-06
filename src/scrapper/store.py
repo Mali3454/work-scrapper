@@ -1,7 +1,10 @@
 import json
+import logging
 from pathlib import Path
 
 from scrapper.models import Job
+
+logger = logging.getLogger(__name__)
 
 
 def load_seen(path: Path) -> set[str]:
@@ -9,9 +12,15 @@ def load_seen(path: Path) -> set[str]:
     if not path.exists():
         return set()
     seen: set[str] = set()
-    for line in path.read_text(encoding="utf-8").splitlines():
+    for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
         if line.strip():
-            seen.add(json.loads(line)["key"])
+            try:
+                seen.add(json.loads(line)["key"])
+            except (json.JSONDecodeError, KeyError, TypeError) as e:
+                logger.warning(
+                    f"Skipping malformed line {line_no} in {path}: {e}"
+                )
+                continue
     return seen
 
 
