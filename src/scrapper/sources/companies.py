@@ -3,7 +3,7 @@ from pathlib import Path
 
 import httpx
 import yaml
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from scrapper.models import RawJob
 from scrapper.sources.ats.recruitee import fetch_recruitee
@@ -27,11 +27,37 @@ class CompanyEntry(BaseModel):
 
 
 def load_companies(path: Path) -> list[CompanyEntry]:
+    """Wczytuje rejestr firm. Błąd w pliku nie może zabić przebiegu.
+
+    `companies.yaml` jest plikiem danych edytowanym ręcznie — dopisanie firmy
+    to jedna linijka, więc literówka albo złe wcięcie to kwestia czasu.
+    Wyjątek poleciałby z `main()` przed odpytaniem czegokolwiek, czyli pomyłka
+    przy JEDNEJ firmie kładłaby cały scraper. Zamiast tego: zły plik → pusty
+    rejestr, zły wpis → pominięty, oba z logiem ostrzeżenia.
+    """
     path = Path(path)
     if not path.exists():
         return []
-    raw = yaml.safe_load(path.read_text(encoding="utf-8")) or []
-    return [CompanyEntry(**entry) for entry in raw]
+    try:
+        raw = yaml.safe_load(path.read_text(encoding="utf-8")) or []
+    except yaml.YAMLError as exc:
+        logger.warning("companies: nie mogę sparsować %s, pomijam rejestr: %s", path, exc)
+        return []
+    if not isinstance(raw, list):
+        logger.warning("companies: %s nie zawiera listy wpisów (jest %s), pomijam rejestr",
+                       path, type(raw).__name__)
+        return []
+
+    entries = []
+    for index, item in enumerate(raw):
+        if not isinstance(item, dict):
+            logger.warning("companies: wpis #%d w %s nie jest obiektem, pomijam", index, path)
+            continue
+        try:
+            entries.append(CompanyEntry(**item))
+        except (ValidationError, TypeError) as exc:
+            logger.warning("companies: pomijam błędny wpis #%d w %s: %s", index, path, exc)
+    return entries
 
 
 DEFAULT_FETCHERS = {"recruitee": fetch_recruitee}
@@ -63,6 +89,16 @@ class CompaniesSource:
             if fetcher is None:
                 logger.info(
                     "companies: pomijam %s — brak parsera dla ATS '%s'", entry.name, entry.ats
+                )
+                continue
+            if not entry.slug:
+                # Bez sluga nie ma z czego zbudować URL-a API. Gdybyśmy weszli
+                # w fetcher, poleciałby błąd DNS złapany niżej i zalogowany jako
+                # "firma padła" — czyli komunikat o awarii zewnętrznej zamiast
+                # o literówce w rejestrze.
+                logger.warning(
+                    "companies: pomijam %s — ATS '%s' wymaga pola `slug`, którego brakuje",
+                    entry.name, entry.ats,
                 )
                 continue
             try:

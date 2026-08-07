@@ -1,5 +1,11 @@
 from scrapper.models import RawJob
-from scrapper.sources.companies import CompaniesSource, CompanyEntry, load_companies
+from scrapper.sources.ats.recruitee import fetch_recruitee
+from scrapper.sources.companies import (
+    DEFAULT_FETCHERS,
+    CompaniesSource,
+    CompanyEntry,
+    load_companies,
+)
 
 COMPANIES_YAML = """
 - name: Acme
@@ -79,12 +85,53 @@ def test_source_name():
 
 
 def test_default_fetchers_include_recruitee():
-    entries = [CompanyEntry(name="Acme", ats="recruitee", slug="acme")]
+    # Asercja musi być o zawartości rejestru fetcherów, a nie o wyniku fetch():
+    # `jobs == []` wychodzi tak samo, gdy fetcher JEST (leci wywołanie, wywala
+    # się na `client=None`, błąd łapany per firma) i gdy fetchera NIE MA (wpis
+    # pominięty jako nieznany ATS). Taki test przeszedłby po zgubieniu wpisu
+    # `recruitee` w refaktorze — czyli nie łapałby dokładnie tego, po co jest.
+    assert DEFAULT_FETCHERS["recruitee"] is fetch_recruitee
 
-    # Bez jawnego `fetchers=` powinien zostać użyty DEFAULT_FETCHERS zawierający
-    # prawdziwy fetch_recruitee — sprawdzamy tylko, że nie wybucha z powodu
-    # nieznanego ATS (samo wywołanie sieciowe nie jest tu testowane, testy
-    # działają bez sieci — fetch_recruitee sam rzuci błąd sieci, złapany per firma).
-    jobs = CompaniesSource(entries).fetch(client=None)
+
+def test_source_uses_default_fetchers_when_none_given():
+    assert CompaniesSource([]).fetchers is DEFAULT_FETCHERS
+
+
+def test_entry_without_slug_is_skipped_not_fetched():
+    entries = [CompanyEntry(name="Acme", ats="recruitee")]  # literówka w rejestrze
+    called = []
+
+    def fetcher(entry, client):
+        called.append(entry.name)
+        return [_job("acme")]
+
+    jobs = CompaniesSource(entries, fetchers={"recruitee": fetcher}).fetch(client=None)
 
     assert jobs == []
+    assert called == []  # fetcher nie może zostać wywołany bez sluga
+
+
+def test_broken_yaml_yields_empty_registry_not_crash(tmp_path):
+    path = tmp_path / "companies.yaml"
+    path.write_text("- name: Acme\n   ats: recruitee\n  slug: acme\n", encoding="utf-8")
+
+    assert load_companies(path) == []
+
+
+def test_yaml_that_is_not_a_list_yields_empty_registry(tmp_path):
+    path = tmp_path / "companies.yaml"
+    path.write_text("name: Acme\nats: recruitee\n", encoding="utf-8")
+
+    assert load_companies(path) == []
+
+
+def test_invalid_entry_is_skipped_but_rest_is_loaded(tmp_path):
+    path = tmp_path / "companies.yaml"
+    path.write_text(
+        "- name: Acme\n  ats: recruitee\n  slug: acme\n"
+        "- ats: recruitee\n  slug: bezimienna\n"  # brak wymaganego `name`
+        "- name: Beta\n  ats: recruitee\n  slug: beta\n",
+        encoding="utf-8",
+    )
+
+    assert [e.name for e in load_companies(path)] == ["Acme", "Beta"]

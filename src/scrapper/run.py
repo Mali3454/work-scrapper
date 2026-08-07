@@ -10,7 +10,7 @@ from scrapper.deduper import deduplicate
 from scrapper.matcher import filter_jobs
 from scrapper.models import Config, Profile
 from scrapper.notifier import render, send, subject_for, warnings_from
-from scrapper.sources.base import Source, build_client, collect
+from scrapper.sources.base import AllSourcesFailed, Source, build_client, collect
 from scrapper.sources.companies import CompaniesSource, load_companies
 from scrapper.sources.justjoinit import JustJoinIt
 from scrapper.sources.nofluffjobs import NoFluffJobs
@@ -27,6 +27,19 @@ COMPANIES_PATH = ROOT / "companies.yaml"
 def run(config: Config, sources: list[Source], store_path: Path, client,
         now: datetime, sender=smtplib.SMTP) -> int:
     results = collect(sources, client)  # jedno odpytanie źródeł na przebieg
+    if results and not any(result.jobs for result in results):
+        # Zero ofert NA WEJŚCIU (przed filtrowaniem) to nie jest spokojny dzień —
+        # same portale mają tysiące ogłoszeń. To sygnał zepsutych parserów albo
+        # blokady IP i przebieg ma się wysypać, żeby Actions dał znać.
+        #
+        # `collect` sam tego nie wyłapie: rzuca dopiero gdy KAŻDE źródło zwróci
+        # wyjątek, a `CompaniesSource` z założenia nie rzuca nigdy (łapie błędy
+        # per firma). Bez tego warunku padnięcie obu portali dawałoby zielony
+        # run z `nowe_oferty=0`. Ostrzeżenia w stopce maila też by nie pomogły,
+        # bo przy braku nowych ofert mail w ogóle nie jest wysyłany.
+        raise AllSourcesFailed(
+            f"Żadne z {len(results)} źródeł nie zwróciło ani jednej oferty"
+        )
     warnings = warnings_from(results)
 
     matched = []

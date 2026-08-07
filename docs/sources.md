@@ -487,7 +487,11 @@ published_at         — data publikacji w formacie `"YYYY-MM-DD HH:MM:SS UTC"`
 salary                — obiekt `{min, max, period, currency}`; we WSZYSTKICH
                        3 ofertach fixture'a wszystkie pola `null` (Espeo nie
                        podaje widełek w tych konkretnych ofertach) — parser
-                       mimo to buduje string, gdy `min`/`max` są obecne
+                       buduje string, gdy obecne jest CHOĆBY JEDNO z `min`/`max`
+                       (widełki jednostronne, np. "od 15000 PLN/month", są w
+                       polskich ofertach częste i nie wolno ich gubić); `None`
+                       dopiero gdy oba są `null`. Porównania przez `is None`,
+                       bo `0` jest poprawną dolną granicą
 status                — `"published"` w całej próbce; oferty niepublikowane/
                        zamknięte prawdopodobnie w ogóle nie występują w tym
                        endponcie (nie zaobserwowano innego statusu)
@@ -500,7 +504,7 @@ status                — `"published"` w całej próbce; oferty niepublikowane/
 | `id` | `external_id` | `str(id)`; fallback na `url`, gdyby `id` kiedyś brakowało |
 | `title` | `title` | bez zmian |
 | — (parametr `company` przekazany do `parse_recruitee`) | `company` | **CELOWO NIE `company_name` z payloadu** — nazwa firmy pochodzi z `companies.yaml` (rejestru), żeby była spójna z tym, jak ta sama firma mogłaby się nazywać na innych źródłach, i żeby deduplikacja (`deduper.py`) grupowała poprawnie |
-| `city` | `city` | bez zmian |
+| `city` | `city` | **zerowane na `None`, gdy `remote: true` i `location == "Remote job"`** — `city` to siedziba firmy, nie miejsce pracy (patrz wyżej). Zostawienie go dałoby klucz deduplikacji `...\|poznan` dla oferty, którą portale pokazują jako zdalną bez miasta, więc ta sama oferta z Recruitee i z portalu nie scaliłaby się — czyli dokładnie ten przypadek, dla którego `company:*` ma priorytet 100 |
 | `remote` | `remote` | **wprost z API**, bool — nie trzeba heurystyki |
 | `careers_url` (fallback `careers_apply_url`) | `url` | gotowy URL, nie trzeba budować |
 | `salary` (obiekt) | `salary` | string budowany z `min`/`max`/`currency`/`period`, tylko gdy `min` i `max` oba obecne; w fixture zawsze `None` (żadna z 3 ofert nie ma podanych widełek) |

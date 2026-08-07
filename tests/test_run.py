@@ -4,6 +4,7 @@ import pytest
 
 from scrapper.models import Config, Profile, RawJob, SmtpConfig
 from scrapper.run import cities_from_profiles, run
+from scrapper.sources.base import AllSourcesFailed
 from scrapper.store import load_seen
 
 NOW = datetime(2026, 8, 6, 12, 0, tzinfo=timezone.utc)
@@ -105,6 +106,31 @@ def test_failing_source_does_not_break_run(tmp_path):
     count = run(CONFIG, sources, tmp_path / "jobs.jsonl", client=None, now=NOW, sender=sender)
 
     assert count == 1
+
+
+def test_zero_offers_from_every_source_fails_the_run(tmp_path):
+    """Padnięcie portali nie może dać zielonego runu.
+
+    `CompaniesSource` z założenia nie rzuca wyjątków (łapie błędy per firma),
+    więc gdy portale przestaną odpowiadać, `collect` nie zobaczy "wszystkie
+    padły" i przebieg zakończyłby się cicho z `nowe_oferty=0`. Maila też by nie
+    było, bo mail idzie tylko przy nowych ofertach — awaria byłaby niewidoczna.
+    """
+    sources = [FakeSource([], name="justjoinit", error="timeout"),
+               FakeSource([], name="companies")]
+
+    with pytest.raises(AllSourcesFailed):
+        run(CONFIG, sources, tmp_path / "jobs.jsonl", client=None, now=NOW,
+            sender=RecordingSender())
+
+
+def test_offers_that_match_nothing_are_not_a_failure(tmp_path):
+    # Źródła DZIAŁAJĄ (zwracają oferty), tylko nic nie pasuje do profilu —
+    # to normalny przebieg, nie awaria.
+    count = run(CONFIG, [FakeSource([_raw(title="Backend Developer")])],
+                tmp_path / "jobs.jsonl", client=None, now=NOW, sender=RecordingSender())
+
+    assert count == 0
 
 
 def test_smtp_failure_does_not_persist_state(tmp_path):

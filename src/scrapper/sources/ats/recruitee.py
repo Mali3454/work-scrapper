@@ -32,10 +32,17 @@ def _parse_datetime(value: str | None) -> datetime | None:
 
 
 def _salary(salary: dict | None) -> str | None:
+    """Buduje string widełek. Obsługuje też widełki jednostronne.
+
+    "od 15 000 PLN" bez górnej granicy to w polskich ofertach B2B częsty
+    wzorzec — odrzucenie takiej oferty jako "bez widełek" gubiłoby informację,
+    którą API realnie zwróciło. Porównania są przez `is None`, bo `0` jest
+    poprawną (choć nietypową) wartością dolnej granicy.
+    """
     if not salary:
         return None
     low, high = salary.get("min"), salary.get("max")
-    if not low or not high:
+    if low is None and high is None:
         return None
     currency = (salary.get("currency") or "").upper()
     period = (salary.get("period") or "").casefold()
@@ -44,7 +51,14 @@ def _salary(salary: dict | None) -> str | None:
     def _fmt(value):
         return f"{value:g}" if isinstance(value, float) else str(value)
 
-    return f"{_fmt(low)}-{_fmt(high)} {currency}{period_label}".strip()
+    if low is None:
+        amount = f"do {_fmt(high)}"
+    elif high is None:
+        amount = f"od {_fmt(low)}"
+    else:
+        amount = f"{_fmt(low)}-{_fmt(high)}"
+
+    return f"{amount} {currency}{period_label}".strip()
 
 
 def parse_recruitee(payload: dict, company: str, slug: str) -> list[RawJob]:
@@ -61,16 +75,25 @@ def parse_recruitee(payload: dict, company: str, slug: str) -> list[RawJob]:
             logger.debug("recruitee(%s): pomijam ofertę bez URL: %r", slug, offer)
             continue
         offer_id = offer.get("id")
+        remote = bool(offer.get("remote"))
+        city = offer.get("city")
+        # `city` w Recruitee to siedziba firmy, NIE miejsce wykonywania pracy —
+        # oferta zdalna też ma tam wpisane miasto centrali (patrz docs/sources.md).
+        # Zostawienie go dałoby klucz deduplikacji `...|poznan` dla oferty, którą
+        # portal pokazuje jako zdalną bez miasta — ta sama oferta z dwóch źródeł
+        # nie scaliłaby się. Przy ofercie zdalnej miasto zerujemy.
+        if remote and (offer.get("location") or "").strip().casefold() == "remote job":
+            city = None
         jobs.append(
             RawJob(
                 source=f"company:{slug}",
                 external_id=str(offer_id) if offer_id is not None else url,
                 title=offer.get("title", ""),
                 company=company,
-                city=offer.get("city"),
+                city=city,
                 # Pole `remote` (bool) jest zwracane wprost przez API — nie
                 # trzeba go wyprowadzać heurystyką ze stringów lokalizacji.
-                remote=bool(offer.get("remote")),
+                remote=remote,
                 url=url,
                 salary=_salary(offer.get("salary")),
                 posted_at=_parse_datetime(offer.get("published_at")),
