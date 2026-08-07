@@ -609,8 +609,14 @@ więc weryfikacja na żywo tego nie pokazała, ale ustawienie `remote=False` na
 sztywno gubiło KAŻDĄ ofertę zdalną: `city` stawało się `"Remote"`, a
 `matcher._location_ok` — nie widząc `remote=True` — nie wchodził w gałąź
 `include_remote` i szukał miasta z profilu w słowie „remote". Parser używa
-`location.is_remote`, a gdy całą lokalizacją jest „Remote", zeruje `city`, żeby
-nie trafiło do klucza deduplikacji jako segment `remote`.
+`location.is_remote`, a `extract_city` zwraca dla takiej lokalizacji `None` —
+„Remote" nie jest miastem. Zerowanie siedzi we wspólnym module, nie w parserze,
+żeby Greenhouse i Lever zachowywały się identycznie: gdy było tylko w
+Greenhousie, ta sama oferta zdalna dostawała klucz dedup `…|remote` z jednego
+źródła i `…|remote-europe` z drugiego i pokazywała się w mailu dwa razy.
+(Sam segment `remote` w kluczu bierze się i tak z `deduper` — `dedup_key` ma
+własny fallback `"remote" if job.remote else ""` — więc zerowanie `city` nie
+służy ochronie klucza, tylko temu, żeby `city` nie zawierało nie-miasta.)
 
 ### Wspólna normalizacja lokalizacji (`sources/ats/location.py`)
 
@@ -632,13 +638,25 @@ dopasowaną do firmy, na której ją napisano. Dla `"Szczecin, Poland"` dawała
 testu. Dlatego reguła jest jedna i wspólna:
 
 1. odrzuć segmenty będące krajem/regionem (`Poland`, `UK`, `USA`, `Europe`…)
-   oraz segmenty będące samym kodem pocztowym,
-2. jeśli któryś segment zaczyna się polskim kodem pocztowym (`NN-NNN`), miasto
-   stoi zaraz za nim (to jedyny sygnał odróżniający adres pocztowy od formatu
-   `"Miasto, Kraj"`),
-3. w przeciwnym razie weź pierwszy pozostały segment,
-4. zmapuj egzonim (dopasowanie po CAŁYM segmencie, nie po podciągu — dlatego
+   oraz segmenty będące samym kodem pocztowym. Lista krajów **celowo nie
+   zawiera** miast-państw ani nazw dwuznacznych (`Singapore`, `Mexico`,
+   `Georgia`, `Luxembourg`) — odrzucenie ich dałoby `city=None` i wypadnięcie
+   oferty z filtra lokalizacji,
+2. jeśli któryś segment zaczyna się kodem pocztowym (PL `NN-NNN` albo ciągły
+   4–6-cyfrowy: DE/FR/ES/US), miasto stoi zaraz za nim — to sygnał
+   odróżniający adres pocztowy od formatu `"Miasto, Kraj"`,
+3. w przeciwnym razie weź pierwszy segment **bez cyfry**; segment z cyfrą to
+   praktycznie zawsze ulica z numerem (`"ul. Zbożowa 4"`, `"1 Infinite Loop"`),
+   a nazwy miast cyfr nie zawierają,
+4. zwróć `None`, jeśli wynikiem jest marker pracy zdalnej („Remote",
+   „Remote - Europe") — to nie miasto,
+5. zmapuj egzonim (dopasowanie po CAŁYM segmencie, nie po podciągu — dlatego
    niepotwierdzone wpisy mapy nie grożą fałszywym trafieniem).
+
+Znane ograniczenie: `"Warsaw, Poland (Remote)"` daje `remote=True` i
+`city="Warsaw"`, a `matcher._location_ok` przy `remote=True` zwraca
+`profile.include_remote` bez sprawdzania miasta. Przy `include_remote: false`
+taka oferta hybrydowa w Szczecinie zostałaby odrzucona.
 
 ### Mapowanie pól → `RawJob`
 
@@ -665,7 +683,9 @@ są przycięte nie tylko co do liczby ofert, ale i **co do pól** — usunięto 
 `internal_job_id`, `requisition_id`, `metadata` (Greenhouse), `applyUrl`,
 `lists` (Lever), `shortlink`, `department` (Workable). Skutek: fallbacki, które
 kod realnie ma (`applyUrl` w Lever, `shortlink` w Workable), nie są pokryte
-realnymi danymi — testują je tylko przypadki syntetyczne.
+realnymi danymi — pokrywają je wyłącznie przypadki syntetyczne w
+`tests/test_ats_parsers.py` (`test_lever_falls_back_to_apply_url`,
+`test_workable_falls_back_to_shortlink_and_url_as_external_id`).
 
 Fixture: `tests/fixtures/greenhouse.json` (przycięty do 2 z 4 ofert home.pl,
 obie z adresem `"ul. Zbożowa 4, 70-653 Stettin"` — celowo zachowane, to

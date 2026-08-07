@@ -5,6 +5,7 @@ from pathlib import Path
 import httpx
 import pytest
 
+from scrapper.deduper import dedup_key
 from scrapper.matcher import matches
 from scrapper.models import Profile
 from scrapper.sources.ats.greenhouse import fetch_greenhouse, parse_greenhouse
@@ -93,12 +94,61 @@ def test_greenhouse_city_extraction_handles_missing_location():
     ("Estonia, Tallinn", "Tallinn"),
     # Pojedynczy segment.
     ("Kraków", "Kraków"),
+    # Adres bez polskiego kodu pocztowego — miasto nie może wyjść ulicą.
+    ("ul. Zbożowa 4, Szczecin", "Szczecin"),
+    ("Musterstrasse 1, 10115 Berlin", "Berlin"),
+    ("10115 Berlin", "Berlin"),
+    ("1 Infinite Loop, Cupertino, CA", "Cupertino"),
     # Sam kod pocztowy to nie miasto.
     ("70-653", None),
     ("   ", None),
+    # "Remote" to nie miasto — w obu wariantach zapisu.
+    ("Remote", None),
+    ("Remote - Europe", None),
+    ("Remote, Poland", None),
+    # Miasta-państwa i nazwy dwuznaczne NIE mogą zostać odrzucone jako kraj.
+    ("Singapore", "Singapore"),
+    ("Mexico", "Mexico"),
+    ("Luxembourg", "Luxembourg"),
+    ("Atlanta, Georgia", "Atlanta"),
 ])
 def test_city_extraction_handles_every_observed_format(location_name, expected):
     assert extract_city(location_name) == expected
+
+
+@pytest.mark.parametrize("exonym,expected", [
+    ("Stettin", "Szczecin"),   # POTWIERDZONE realnymi danymi (home.pl)
+    ("Warschau", "Warszawa"),  # poniższe dopisane defensywnie, niepotwierdzone
+    ("Krakau", "Kraków"),
+    ("Danzig", "Gdańsk"),
+    ("Breslau", "Wrocław"),
+    ("Posen", "Poznań"),
+])
+def test_every_exonym_maps_to_polish_name(exonym, expected):
+    """Literówka w wartości mapy (np. "Wroclaw" bez diakrytyku) rozjechałaby
+    klucz deduplikacji względem portali, które zwracają nazwy polskie."""
+    assert extract_city(exonym) == expected
+    assert extract_city(f"{exonym}, Poland") == expected
+
+
+def test_remote_offer_gets_same_city_from_greenhouse_and_lever():
+    """Ta sama oferta zdalna z dwóch ATS-ów musi dać ten sam klucz dedup.
+
+    Gdy zerowanie "Remote" siedziało tylko w greenhouse.py, Lever zostawiał
+    `city="Remote - Europe"` i klucze się rozjeżdżały (`|remote` vs
+    `|remote-europe`), więc oferta pokazywała się w mailu dwa razy.
+    """
+    gh = parse_greenhouse(
+        {"jobs": [{"id": 1, "title": "Dev", "absolute_url": "https://x/1",
+                   "location": {"name": "Remote - Europe"}}]},
+        company="Acme", slug="acme")[0]
+    lv = parse_lever(
+        [{"id": "1", "text": "Dev", "hostedUrl": "https://y/1",
+          "workplaceType": "remote", "categories": {"location": "Remote - Europe"}}],
+        company="Acme", slug="acme")[0]
+
+    assert gh.city is None and lv.city is None
+    assert dedup_key(gh) == dedup_key(lv)
 
 
 def test_greenhouse_remote_offer_is_marked_remote_and_matches_profile():
@@ -249,6 +299,15 @@ def test_lever_created_at_is_epoch_milliseconds():
     assert posted_at.tzinfo is not None
 
 
+def test_lever_falls_back_to_apply_url():
+    """Fixture jest przycięty także kolumnowo (bez `applyUrl`), więc ten
+    fallback nie ma pokrycia w realnych danych — stąd przypadek syntetyczny."""
+    payload = [{"id": "1", "text": "Dev", "applyUrl": "https://jobs.lever.co/acme/1/apply",
+                "categories": {"location": "Warsaw, Poland"}}]
+
+    assert parse_lever(payload, company="Acme", slug="acme")[0].url.endswith("/apply")
+
+
 def test_lever_offer_without_url_is_skipped():
     payload = [{"id": "1", "text": "Bez URL"}]
 
@@ -306,6 +365,18 @@ def test_workable_non_empty_city_is_kept():
                                                        slug="netguru")}
 
     assert jobs["(Senior) Fullstack Engineer (Node.js + Python + Typescript) - Freelance"].city == "Poznań"
+
+
+def test_workable_falls_back_to_shortlink_and_url_as_external_id():
+    """`shortlink` i brak `shortcode` nie występują w przyciętym fixture —
+    obie gałęzie fallbacku pokryte tylko tu."""
+    payload = {"jobs": [{"title": "Dev", "shortlink": "https://wrkbl.co/abc",
+                         "city": "Szczecin", "telecommuting": False}]}
+
+    job = parse_workable(payload, company="Acme", slug="acme")[0]
+
+    assert job.url == "https://wrkbl.co/abc"
+    assert job.external_id == "https://wrkbl.co/abc"
 
 
 def test_workable_external_id_is_shortcode_not_id():

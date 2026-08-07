@@ -44,11 +44,9 @@ def parse_greenhouse(payload: dict, company: str, slug: str) -> list[RawJob]:
         offer_id = offer.get("id")
         location_name = (offer.get("location") or {}).get("name")
         remote = is_remote(location_name)
+        # `extract_city` sam zeruje "Remote"/"Remote - Europe" — nie jest to
+        # miasto (patrz location.py).
         city = extract_city(location_name)
-        if remote and city and is_remote(city):
-            # "Remote" jako całe miasto to nie miasto — zerujemy, żeby nie
-            # trafiło do klucza deduplikacji jako segment "remote".
-            city = None
         posted_at = _parse_datetime(offer.get("first_published")) or _parse_datetime(
             offer.get("updated_at")
         )

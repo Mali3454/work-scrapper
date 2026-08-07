@@ -23,12 +23,16 @@ takiego nie ma — pierwszy pozostały. Na końcu zmapuj egzonim.
 
 import re
 
-# Polski kod pocztowy "NN-NNN". Rozpoznajemy go, bo w adresie pocztowym miasto
-# stoi PO nim ("70-653 Stettin") — to jedyny sygnał odróżniający adres od
-# formatu "Miasto, Kraj", w którym miasto jest pierwsze.
-_POSTAL_PREFIX = re.compile(r"^(\d{2}-\d{3})\s+(?=\S)")
-# Segment będący samym kodem pocztowym (dowolnego kraju) nie jest miastem.
+# Kod pocztowy na początku segmentu — polski "NN-NNN" albo ciągły 4–6-cyfrowy
+# (DE "10115", FR/ES "28001", US ZIP). W adresie miasto stoi PO nim
+# ("70-653 Stettin", "10115 Berlin"), więc to sygnał "tu jest miasto".
+_POSTAL_PREFIX = re.compile(r"^(?:\d{2}-\d{3}|\d{4,6})\s+(?=\S)")
+# Segment będący samym kodem pocztowym nie jest miastem.
 _POSTAL_ONLY = re.compile(r"^\d[\d\s-]*$")
+# Segment z cyfrą, ale bez kodu pocztowego na początku, to praktycznie zawsze
+# ulica z numerem domu ("ul. Zbożowa 4", "1 Infinite Loop", "Musterstrasse 1").
+# Nazwy miast nie zawierają cyfr, więc taki segment odpada jako kandydat.
+_HAS_DIGIT = re.compile(r"\d")
 
 # Segmenty odrzucane jako kraj/region. Nie jest to kompletna lista krajów
 # świata i nie musi być — chodzi o te, które realnie występują w ogłoszeniach
@@ -43,8 +47,12 @@ _NOT_A_CITY = {
     "finland", "estonia", "latvia", "lithuania", "czechia", "czech republic",
     "slovakia", "hungary", "romania", "bulgaria", "greece", "croatia",
     "slovenia", "serbia", "ukraine", "canada", "australia", "india",
-    "brazil", "mexico", "japan", "singapore", "europe", "emea", "worldwide",
+    "brazil", "japan", "europe", "emea", "worldwide",
 }
+# Świadomie NIE ma tu miast-państw ani nazw dwuznacznych: "Singapore" i
+# "Mexico" (skrót od Mexico City) to realne miasta, a "Georgia" i "Luxembourg"
+# to i kraj, i miasto/stan. Odrzucenie ich dałoby `city=None` i wypadnięcie
+# oferty z filtra lokalizacji — gorzej niż zostawienie nazwy kraju.
 
 # Niemieckie egzonimy polskich miast. POTWIERDZONE realnymi danymi tylko dla
 # "Stettin" (home.pl na Greenhousie). Reszta dopisana defensywnie — dopasowanie
@@ -94,9 +102,6 @@ def extract_city(location_name: str | None) -> str | None:
             continue
         segments.append(segment)
 
-    if not segments:
-        return None
-
     # Segment z kodem pocztowym to adres — miasto stoi zaraz za kodem.
     for segment in segments:
         match = _POSTAL_PREFIX.match(segment)
@@ -105,12 +110,23 @@ def extract_city(location_name: str | None) -> str | None:
 
     # Bez kodu pocztowego zakładamy "Miasto, <cokolwiek>" — miasto jest
     # pierwsze. Segmenty krajów już odpadły wyżej, więc "Portugal, Lisbon"
-    # też trafia tutaj poprawnie jako "Lisbon".
-    return _normalize(segments[0])
+    # też trafia tutaj poprawnie jako "Lisbon". Odrzucamy przy tym segmenty
+    # z cyfrą (ulica z numerem), inaczej "ul. Zbożowa 4, Szczecin" dałoby
+    # miasto "ul. Zbożowa 4".
+    for segment in segments:
+        if not _HAS_DIGIT.search(segment):
+            return _normalize(segment)
+    return None
 
 
 def _normalize(city: str) -> str | None:
     city = city.strip()
     if not city:
+        return None
+    # "Remote" / "Remote - Europe" to nie miasto. Zerujemy tutaj, a nie w
+    # parserach, żeby Greenhouse i Lever zachowywały się tak samo — inaczej
+    # ta sama oferta zdalna dostawałaby klucz dedup `...|remote` z jednego
+    # źródła i `...|remote-europe` z drugiego i nie scaliłaby się.
+    if is_remote(city):
         return None
     return _CITY_EXONYMS.get(city.casefold(), city)
