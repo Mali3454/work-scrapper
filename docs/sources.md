@@ -580,9 +580,9 @@ firmę) używa niemieckiego egzonimu `Stettin` zamiast polskiego `Szczecin`.
 `matcher._location_ok` dopasowuje przez `casefold()`+substring
 (`"szczecin" in city`) — bez normalizacji ta oferta (i każda inna
 z tego boarda) NIGDY nie przejdzie filtra lokalizacji dla profilu
-`locations: [szczecin]`, mimo że fizycznie jest w Szczecinie. Parser
-(`_extract_city` w `greenhouse.py`) wyciąga miasto z adresu i mapuje
-znane egzonimy na polskie nazwy. **Potwierdzone realnymi danymi: tylko
+`locations: [szczecin]`, mimo że fizycznie jest w Szczecinie. Miasto wyciąga
+i normalizuje wspólny moduł `sources/ats/location.py` (patrz niżej).
+**Potwierdzone realnymi danymi: tylko
 `Stettin` → `Szczecin`** (home.pl). Mapa zawiera dodatkowo `Warschau`,
 `Krakau`, `Danzig`, `Breslau`, `Posen` jako zabezpieczenie defensywne —
 Greenhouse jest używany też przez firmy niemieckojęzyczne, więc ryzyko
@@ -602,6 +602,44 @@ opublikowana 3 dni temu).
 Offset dat to `-04:00` (nie `Z`) — `datetime.fromisoformat` (Python 3.11+)
 obsługuje to wprost, bez potrzeby zamiany sufiksów.
 
+**Pułapka nr 3 — praca zdalna siedzi tylko w tekście lokalizacji.**
+Greenhouse nie ma pola boolowskiego dla pracy zdalnej; jedynym nośnikiem jest
+`location.name` (`"Remote"`, `"Remote - Europe"`). home.pl nie ma takich ofert,
+więc weryfikacja na żywo tego nie pokazała, ale ustawienie `remote=False` na
+sztywno gubiło KAŻDĄ ofertę zdalną: `city` stawało się `"Remote"`, a
+`matcher._location_ok` — nie widząc `remote=True` — nie wchodził w gałąź
+`include_remote` i szukał miasta z profilu w słowie „remote". Parser używa
+`location.is_remote`, a gdy całą lokalizacją jest „Remote", zeruje `city`, żeby
+nie trafiło do klucza deduplikacji jako segment `remote`.
+
+### Wspólna normalizacja lokalizacji (`sources/ats/location.py`)
+
+ATS-y nie mają znormalizowanego pola miasta — zwracają jeden string wpisany
+ręcznie przez firmę, a **konwencja różni się nie tylko między ATS-ami, ale i
+między firmami w tym samym ATS-ie**:
+
+| String | Skąd | Miasto |
+| --- | --- | --- |
+| `"ul. Zbożowa 4, 70-653 Stettin"` | Greenhouse / home.pl | ostatni segment (adres pocztowy) |
+| `"Szczecin, Poland"` | Greenhouse / typowy board | **pierwszy** segment |
+| `"Portugal, Lisbon"` | Lever / pipedrive | ostatni segment |
+| `"San Francisco, CA"` | Lever / typowy board | **pierwszy** segment |
+| `"Remote"` | oba | brak miasta |
+
+Pierwotnie każdy parser miał własną regułę „weź ostatni segment po przecinku",
+dopasowaną do firmy, na której ją napisano. Dla `"Szczecin, Poland"` dawała
+`city="Poland"` — czyli **ciche zero ofert**, bez błędu, logu i failującego
+testu. Dlatego reguła jest jedna i wspólna:
+
+1. odrzuć segmenty będące krajem/regionem (`Poland`, `UK`, `USA`, `Europe`…)
+   oraz segmenty będące samym kodem pocztowym,
+2. jeśli któryś segment zaczyna się polskim kodem pocztowym (`NN-NNN`), miasto
+   stoi zaraz za nim (to jedyny sygnał odróżniający adres pocztowy od formatu
+   `"Miasto, Kraj"`),
+3. w przeciwnym razie weź pierwszy pozostały segment,
+4. zmapuj egzonim (dopasowanie po CAŁYM segmencie, nie po podciągu — dlatego
+   niepotwierdzone wpisy mapy nie grożą fałszywym trafieniem).
+
 ### Mapowanie pól → `RawJob`
 
 | Pole w API | Pole w RawJob | Uwagi |
@@ -610,7 +648,7 @@ obsługuje to wprost, bez potrzeby zamiany sufiksów.
 | `title` | `title` | bez zmian |
 | — (parametr `company`) | `company` | z rejestru `companies.yaml`, jak w Recruitee |
 | `location.name` (wyciągnięte + znormalizowane) | `city` | patrz Pułapka nr 1 wyżej |
-| — (stała) | `remote` | `False` — w zbadanej próbce (home.pl) brak jakiegokolwiek pola/wskaźnika pracy zdalnej; nie badano innych boardów Greenhouse |
+| `location.name` (marker tekstowy) | `remote` | patrz Pułapka nr 3 — brak pola bool, wyprowadzane ze słów `remote`/`zdalnie`/`anywhere` w `location.name`; w próbce home.pl zawsze `False` |
 | `absolute_url` | `url` | gotowy URL, nie trzeba budować |
 | — (stała) | `salary` | `None` — brak pola wynagrodzenia w zbadanej próbce |
 | `first_published` (fallback `updated_at`) | `posted_at` | patrz Pułapka nr 2 wyżej |
@@ -619,8 +657,15 @@ obsługuje to wprost, bez potrzeby zamiany sufiksów.
 
 - Brak pola wynagrodzenia w zbadanej próbce (4 oferty home.pl) —
   `salary` zawsze `None`.
-- Brak wprost dostępnego pola boolowskiego "remote" — nie badano, czy
-  istnieje na innych boardach Greenhouse; w tym repo nieużywane.
+- Brak pola boolowskiego "remote" — wyprowadzane z tekstu `location.name`
+  (Pułapka nr 3).
+
+**Uwaga o fixture'ach ATS:** `greenhouse.json`, `lever.json` i `workable.json`
+są przycięte nie tylko co do liczby ofert, ale i **co do pól** — usunięto m.in.
+`internal_job_id`, `requisition_id`, `metadata` (Greenhouse), `applyUrl`,
+`lists` (Lever), `shortlink`, `department` (Workable). Skutek: fallbacki, które
+kod realnie ma (`applyUrl` w Lever, `shortlink` w Workable), nie są pokryte
+realnymi danymi — testują je tylko przypadki syntetyczne.
 
 Fixture: `tests/fixtures/greenhouse.json` (przycięty do 2 z 4 ofert home.pl,
 obie z adresem `"ul. Zbożowa 4, 70-653 Stettin"` — celowo zachowane, to
@@ -678,9 +723,16 @@ categories.allLocations — lista stringów w tym samym formacie — oferta
 createdAt               — epoch millisecond timestamp (int)
 ```
 
-**Pułapka — kolejność w `categories.location`.** Format to `"Kraj,
-Miasto"`, nie `"Miasto, Kraj"` — wzięcie pierwszego segmentu dałoby nazwę
-kraju jako `city`. Parser bierze OSTATNI segment po przecinku.
+**Pułapka — kolejność w `categories.location` jest niestabilna.** Na
+Pipedrive format to `"Kraj, Miasto"` (`"Portugal, Lisbon"`), więc wzięcie
+pierwszego segmentu dałoby nazwę kraju. Ale `categories.location` to pole
+tekstowe wpisywane swobodnie przez firmę, nie enum — inne boardy Levera używają
+`"Miasto, Kraj"` (`"Warsaw, Poland"`) albo `"Miasto, Stan"`
+(`"San Francisco, CA"`). Reguła „weź ostatni segment", dopasowana do Pipedrive,
+zwracałaby dla nich kraj/stan i cicho gubiła oferty na filtrze lokalizacji.
+Dlatego Lever używa tej samej wspólnej normalizacji co Greenhouse
+(`sources/ats/location.py`), która odrzuca kraje zamiast liczyć na kolejność
+segmentów.
 
 **Decyzja o `categories.allLocations`:** jedna oferta Lever może mieć kilka
 lokalizacji (np. ta sama rola otwarta w Lizbonie, Londynie, Dublinie i
@@ -691,12 +743,16 @@ samej odpowiedzi, a nie jako jedna oferta z wieloma lokalizacjami w
 wiele `RawJob` per lokalizacja z `allLocations` — bierze tylko
 `categories.location` (główną/pierwszą). Uzasadnienie: w zbadanej próbce
 każdy wpis `allLocations` miał dokładnie jeden element pokrywający się z
-`categories.location`, więc rozbicie nie miałoby efektu na tych danych;
-gdyby `allLocations` miało więcej elementów niż jeden, rozbijanie na wiele
-`RawJob` z tym samym `external_id` i różnym `city` skomplikowałoby
-deduplikację (`deduper.py` klucz zawiera `external_id`) bez wyraźnej
-korzyści dla tego projektu (interesuje nas wyłącznie obecność oferty w
-Szczecinie, nie pełna lista miast).
+`categories.location`, a Lever i tak zwraca osobną ofertę z własnym `id` per
+lokalizacja — rozbijanie zdublowałoby to, co API już rozbiło.
+
+(Wcześniejsza wersja tego akapitu uzasadniała decyzję tym, że klucz
+deduplikacji zawiera `external_id`. To nieprawda — `deduper.dedup_key` to
+`slug(company)|slug(title)|city`, bez `external_id`. Decyzja zostaje, ale
+powód jest ten wyżej.)
+
+Koszt tej decyzji: oferta, w której Szczecin jest lokalizacją inną niż
+główna, nie zostanie złapana po mieście.
 
 **`workplaceType` zamiast heurystyki:** pole boolowskie/enumowe jest
 używane wprost (analogicznie do `remote` w Recruitee i `workplaceType` w
@@ -711,7 +767,7 @@ Heurystyka po tekście jest fallbackiem tylko, gdy `workplaceType` brakuje
 | `id` | `external_id` | string (UUID) |
 | `text` | `title` | bez zmian |
 | — (parametr `company`) | `company` | z rejestru `companies.yaml` |
-| `categories.location` (ostatni segment po przecinku) | `city` | patrz pułapka wyżej |
+| `categories.location` (przez wspólną normalizację) | `city` | patrz pułapka wyżej |
 | `workplaceType == "remote"` | `remote` | fallback: słowo "remote" w `text`/`categories.location`, gdy pole brakuje |
 | `hostedUrl` (fallback `applyUrl`) | `url` | gotowy URL |
 | — (stała) | `salary` | `None` — brak pola wynagrodzenia w zbadanej próbce |

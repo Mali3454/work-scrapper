@@ -9,6 +9,7 @@ from scrapper.matcher import matches
 from scrapper.models import Profile
 from scrapper.sources.ats.greenhouse import fetch_greenhouse, parse_greenhouse
 from scrapper.sources.ats.lever import fetch_lever, parse_lever
+from scrapper.sources.ats.location import extract_city
 from scrapper.sources.ats.workable import fetch_workable, parse_workable
 from scrapper.sources.companies import CompanyEntry
 
@@ -69,16 +70,65 @@ def test_greenhouse_uses_first_published_not_updated_at():
 
 
 def test_greenhouse_city_extraction_strips_street_and_postal_code():
-    from scrapper.sources.ats.greenhouse import _extract_city
-
-    assert _extract_city("ul. Zbożowa 4, 70-653 Stettin") == "Szczecin"
+    assert extract_city("ul. Zbożowa 4, 70-653 Stettin") == "Szczecin"
 
 
 def test_greenhouse_city_extraction_handles_missing_location():
-    from scrapper.sources.ats.greenhouse import _extract_city
+    assert extract_city(None) is None
+    assert extract_city("") is None
 
-    assert _extract_city(None) is None
-    assert _extract_city("") is None
+
+@pytest.mark.parametrize("location_name,expected", [
+    # Format home.pl (adres pocztowy + niemiecki egzonim) — miasto PO kodzie.
+    ("ul. Zbożowa 4, 70-653 Stettin", "Szczecin"),
+    # Najpowszechniejszy format Greenhouse — miasto PRZED krajem. Reguła
+    # "weź ostatni segment" dawała tu "Poland", czyli ciche zero ofert.
+    ("Szczecin, Poland", "Szczecin"),
+    ("Warsaw, Poland", "Warsaw"),
+    ("San Francisco, CA", "San Francisco"),
+    ("London, UK", "London"),
+    # Format Levera (kraj PRZED miastem) — ta sama reguła musi go ogarnąć.
+    ("Portugal, Lisbon", "Lisbon"),
+    ("UK, London", "London"),
+    ("Estonia, Tallinn", "Tallinn"),
+    # Pojedynczy segment.
+    ("Kraków", "Kraków"),
+    # Sam kod pocztowy to nie miasto.
+    ("70-653", None),
+    ("   ", None),
+])
+def test_city_extraction_handles_every_observed_format(location_name, expected):
+    assert extract_city(location_name) == expected
+
+
+def test_greenhouse_remote_offer_is_marked_remote_and_matches_profile():
+    """Greenhouse nie ma pola bool dla pracy zdalnej — jest tylko tekst w
+    `location.name`. Bez `is_remote` taka oferta dostawała `remote=False` i
+    `city="Remote"`, więc matcher szukał miasta z profilu w słowie "remote"
+    i odrzucał KAŻDĄ ofertę zdalną, także przy `include_remote: true`.
+    """
+    payload = {"jobs": [{"id": 1, "title": "Frontend Developer",
+                         "absolute_url": "https://x/1", "location": {"name": "Remote"},
+                         "first_published": "2026-08-01T10:00:00-04:00"}]}
+
+    job = parse_greenhouse(payload, company="Acme", slug="acme")[0]
+
+    assert job.remote is True
+    assert job.city is None  # "Remote" nie jest miastem i nie może trafić do klucza dedup
+
+    profile = Profile(name="frontend-szczecin", keywords=["frontend"],
+                      locations=["szczecin"], include_remote=True, max_age_days=3650)
+    assert matches(job, profile, datetime(2026, 8, 7, tzinfo=timezone.utc)) is True
+
+
+def test_greenhouse_stationary_offer_is_not_marked_remote():
+    payload = {"jobs": [{"id": 1, "title": "Dev", "absolute_url": "https://x/1",
+                         "location": {"name": "ul. Zbożowa 4, 70-653 Stettin"}}]}
+
+    job = parse_greenhouse(payload, company="Acme", slug="acme")[0]
+
+    assert job.remote is False
+    assert job.city == "Szczecin"
 
 
 def test_greenhouse_offer_without_url_is_skipped():
@@ -130,20 +180,38 @@ def test_lever_parse_returns_jobs():
     assert len(parse_lever(_payload(LEVER_PAYLOAD), company="Pipedrive", slug="pipedrive")) == 3
 
 
-def test_lever_payload_is_a_list_not_object():
-    """Zweryfikowane na żywo: payload to LISTA, nie obiekt z kluczem
-    (w przeciwieństwie do Recruitee/Greenhouse). Test dokumentuje to wprost —
-    `_payload` zwraca `list`, nie `dict`."""
-    assert isinstance(_payload(LEVER_PAYLOAD), list)
-
-
-def test_lever_city_is_last_segment_of_country_comma_city():
+def test_lever_parses_list_payload_not_object():
+    """Payload Levera to LISTA, nie obiekt z kluczem (inaczej niż
+    Recruitee/Greenhouse). Asercja musi być o zachowaniu PARSERA na liście —
+    `isinstance(fixture, list)` testowałby tylko fixture i przeszedłby nawet
+    przy pustym parserze.
+    """
     jobs = parse_lever(_payload(LEVER_PAYLOAD), company="Pipedrive", slug="pipedrive")
-    cities = {job.city for job in jobs}
 
-    # "Portugal, Lisbon" -> "Lisbon", "UK, London" -> "London" — miasto na
-    # KOŃCU, nie na początku (pułapka opisana w task-15-brief.md).
-    assert cities == {"Lisbon", "London"}
+    assert len(jobs) == 3
+    assert all(job.source == "company:pipedrive" for job in jobs)
+
+
+def test_lever_city_extracted_regardless_of_segment_order():
+    jobs = parse_lever(_payload(LEVER_PAYLOAD), company="Pipedrive", slug="pipedrive")
+
+    # Fixture pipedrive ma "Kraj, Miasto" ("Portugal, Lisbon", "UK, London").
+    assert {job.city for job in jobs} == {"Lisbon", "London"}
+
+
+def test_lever_city_works_for_opposite_segment_order():
+    """`categories.location` to pole tekstowe wpisywane przez firmę, nie enum.
+    Reguła dopasowana do jednego boarda ("weź ostatni segment") zwracała
+    "Poland" dla "Warsaw, Poland" — czyli ciche zero ofert po lokalizacji.
+    """
+    payload = [{"id": "1", "text": "Dev", "hostedUrl": "https://x/1",
+                "categories": {"location": "Warsaw, Poland"}, "createdAt": 1700000000000},
+               {"id": "2", "text": "Dev", "hostedUrl": "https://x/2",
+                "categories": {"location": "San Francisco, CA"}, "createdAt": 1700000000000}]
+
+    jobs = parse_lever(payload, company="Acme", slug="acme")
+
+    assert [job.city for job in jobs] == ["Warsaw", "San Francisco"]
 
 
 def test_lever_uses_workplace_type_field():
@@ -157,8 +225,10 @@ def test_lever_uses_workplace_type_field():
 
 
 def test_lever_on_site_workplace_type_is_not_remote():
+    # Lokalizacja zawiera słowo "Remote", więc fallback tekstowy dałby tu True —
+    # test przechodzi tylko wtedy, gdy `workplaceType` faktycznie ma pierwszeństwo.
     payload = [{"id": "1", "text": "Dev", "hostedUrl": "https://x/1",
-                "workplaceType": "on-site", "categories": {"location": "Poland, Warsaw"},
+                "workplaceType": "on-site", "categories": {"location": "Remote, Poland"},
                 "createdAt": 1700000000000}]
 
     jobs = parse_lever(payload, company="Acme", slug="acme")
@@ -167,9 +237,16 @@ def test_lever_on_site_workplace_type_is_not_remote():
 
 
 def test_lever_created_at_is_epoch_milliseconds():
-    jobs = parse_lever(_payload(LEVER_PAYLOAD), company="Pipedrive", slug="pipedrive")
+    # Asercja na konkretną datę: przy potraktowaniu `createdAt` jako sekund
+    # wyszedłby rok 58509, a nie 2026 — `is not None` tego nie wyłapie.
+    payload = [{"id": "1", "text": "Dev", "hostedUrl": "https://x/1",
+                "categories": {"location": "Warsaw, Poland"},
+                "createdAt": 1784736705020}]
 
-    assert all(job.posted_at is not None and job.posted_at.tzinfo is not None for job in jobs)
+    posted_at = parse_lever(payload, company="Acme", slug="acme")[0].posted_at
+
+    assert posted_at.year == 2026
+    assert posted_at.tzinfo is not None
 
 
 def test_lever_offer_without_url_is_skipped():
@@ -238,15 +315,32 @@ def test_workable_external_id_is_shortcode_not_id():
 
 
 def test_workable_telecommuting_maps_to_remote():
+    """Fixture netguru ma `telecommuting: true` we WSZYSTKICH ofertach, więc
+    samo `all(remote is True)` przechodziłoby też przy `remote=True` na
+    sztywno. Gałąź `false` musi być sprawdzona osobno, na danych syntetycznych.
+    """
     jobs = parse_workable(_payload(WORKABLE_PAYLOAD), company="Netguru", slug="netguru")
-
     assert all(job.remote is True for job in jobs)
 
+    stationary = {"jobs": [{"shortcode": "X1", "title": "Dev", "url": "https://x/1",
+                            "city": "Szczecin", "telecommuting": False,
+                            "published_on": "2026-07-14"}]}
+    assert parse_workable(stationary, company="Acme", slug="acme")[0].remote is False
 
-def test_workable_published_on_is_date_only():
-    jobs = parse_workable(_payload(WORKABLE_PAYLOAD), company="Netguru", slug="netguru")
 
-    assert all(job.posted_at is not None for job in jobs)
+def test_workable_published_on_date_only_becomes_utc_datetime():
+    """`published_on` to sama data ("2026-07-14"), bez godziny i strefy —
+    `fromisoformat` da naive datetime, a walidator w models.py dociąga UTC.
+    Asercja na konkretną wartość, nie na `is not None`, żeby test faktycznie
+    weryfikował format.
+    """
+    payload = {"jobs": [{"shortcode": "X1", "title": "Dev", "url": "https://x/1",
+                         "city": "Szczecin", "telecommuting": False,
+                         "published_on": "2026-07-14"}]}
+
+    posted_at = parse_workable(payload, company="Acme", slug="acme")[0].posted_at
+
+    assert posted_at == datetime(2026, 7, 14, tzinfo=timezone.utc)
 
 
 def test_workable_offer_without_url_is_skipped():

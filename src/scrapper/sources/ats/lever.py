@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 import httpx
 
 from scrapper.models import RawJob
+from scrapper.sources.ats.location import extract_city
 
 logger = logging.getLogger(__name__)
 
@@ -13,20 +14,15 @@ API_URL = "https://api.lever.co/v0/postings/{slug}?mode=json"
 def _city(categories: dict) -> str | None:
     """Wyciąga miasto z `categories.location`.
 
-    Format zweryfikowany na żywo (pipedrive): **"Kraj, Miasto"**
-    ("Portugal, Lisbon", "UK, London") — miasto jest na KOŃCU, nie na
-    początku. Wrzucenie całego stringa do `city` popsułoby dedup i
-    dopasowanie lokalizacji w matcherze (porównanie substringiem po mieście
-    z profilu nie trafiłoby w "Portugal, Lisbon" dla `locations: [lisbon]`
-    tylko przypadkiem, bo "lisbon" i tak jest podciągiem — ale klucz dedup
-    dostałby śmieciowy, niespójny z innymi źródłami segment).
+    Na pipedrive format to "Kraj, Miasto" ("Portugal, Lisbon", "UK, London"),
+    ale `categories.location` to pole wpisywane swobodnie przez firmę, nie
+    enum — inne boardy Levera używają "Miasto, Kraj" albo "Miasto, Stan".
+    Reguła "weź ostatni segment" dopasowana do pipedrive zwracałaby "Poland"
+    dla "Warsaw, Poland". Dlatego normalizacja jest wspólna dla wszystkich
+    ATS-ów (`location.extract_city`) i odrzuca kraje zamiast liczyć na
+    kolejność segmentów.
     """
-    location = (categories or {}).get("location")
-    if not location:
-        return None
-    # Bierzemy ostatni segment po przecinku — działa też, gdy formatu nie ma
-    # (pojedyncze słowo, brak przecinka: zwracamy je w całości).
-    return location.split(",")[-1].strip() or None
+    return extract_city((categories or {}).get("location"))
 
 
 def _remote(offer: dict) -> bool:
@@ -63,14 +59,14 @@ def parse_lever(payload: list, company: str, slug: str) -> list[RawJob]:
     gdzie lista jest zagnieżdżona pod kluczem.
 
     `categories.allLocations` (lista, oferta bywa w kilku miastach) jest
-    świadomie NIE rozbijana na osobne `RawJob` per lokalizacja — jedna
-    oferta Lever = jeden wpis w `RawJob`, z `city` wziętym z
-    `categories.location` (główna/pierwsza lokalizacja). Rozbicie na wiele
-    `RawJob` z tym samym `external_id` zepsułoby dedup (klucz zawiera
-    `external_id`, więc duplikaty tej samej oferty dla różnych miast
-    scaliłyby się i tak w jeden klucz dedup, ale wtedy `city` byłby losowo
-    nadpisywany przez kolejność w liście) — prostsze i wystarczające dla
-    tego projektu jest jedno miasto na ofertę.
+    świadomie NIE rozbijana na osobne `RawJob` — jedna oferta Lever = jeden
+    wpis, z `city` z `categories.location` (główna lokalizacja). Powód: Lever
+    i tak zwraca osobną ofertę z własnym `id` per lokalizacja (zweryfikowane
+    na pipedrive — "Data Protection Officer" występuje 4 razy, po razie na
+    miasto), więc rozbijanie zdublowałoby to, co API już rozbiło.
+
+    Koszt tej decyzji: oferta, w której Szczecin jest lokalizacją inną niż
+    główna, nie zostanie złapana po mieście.
     """
     jobs = []
     for offer in payload or []:

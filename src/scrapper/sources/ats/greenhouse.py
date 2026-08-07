@@ -1,58 +1,14 @@
 import logging
-import re
 from datetime import datetime
 
 import httpx
 
 from scrapper.models import RawJob
+from scrapper.sources.ats.location import extract_city, is_remote
 
 logger = logging.getLogger(__name__)
 
 API_URL = "https://boards-api.greenhouse.io/v1/boards/{slug}/jobs"
-
-# `location.name` w Greenhouse to zwykle pełny adres w stylu
-# "ul. Zbożowa 4, 70-653 Stettin" (home.pl, zweryfikowane na żywo — patrz
-# docs/sources.md) — miasto jest w OSTATNIM segmencie po przecinku, poprzedzone
-# kodem pocztowym. Wzorzec kodu pocztowego PL: "NN-NNN".
-_POSTAL_CODE = re.compile(r"^\d{2}-\d{3}\s+")
-
-# Greenhouse (albo firma wprowadzająca dane) używa niemieckich egzonimów dla
-# części polskich miast zamiast nazw polskich — potwierdzone bezpośrednio na
-# żywych danych home.pl: "Stettin" zamiast "Szczecin". Bez tej mapy
-# `matcher._location_ok` (dopasowanie substringiem, casefold) NIE złapie
-# żadnej oferty ze Szczecina, bo "szczecin" nie jest podciągiem "stettin" —
-# a home.pl to jedyna szczecińska firma w całym projekcie z żywym ATS-em
-# (patrz task-15-brief.md). Pozostałe wpisy (Warschau, Krakau, Danzig,
-# Breslau, Posen) NIE są potwierdzone realnymi danymi z żadnego innego
-# zweryfikowanego boarda Greenhouse w tym projekcie — dopisane defensywnie,
-# bo Greenhouse jako platforma używana też przez firmy niemieckojęzyczne
-# realnie stosuje egzonimy (potwierdzone dla Stettin), więc ryzyko tego
-# samego dla innych miast jest realne, ale nie zweryfikowane.
-_CITY_EXONYMS = {
-    "stettin": "Szczecin",  # POTWIERDZONE: home.pl, boards-api/v1/boards/homepl/jobs
-    "warschau": "Warszawa",  # niepotwierdzone na żywych danych
-    "krakau": "Kraków",  # niepotwierdzone na żywych danych
-    "danzig": "Gdańsk",  # niepotwierdzone na żywych danych
-    "breslau": "Wrocław",  # niepotwierdzone na żywych danych
-    "posen": "Poznań",  # niepotwierdzone na żywych danych
-}
-
-
-def _extract_city(location_name: str | None) -> str | None:
-    """Wyciąga nazwę miasta z pełnego adresu i normalizuje egzonimy.
-
-    `location.name` bywa pełnym adresem ("ul. Zbożowa 4, 70-653 Stettin"),
-    nie samą nazwą miasta — bierzemy ostatni segment po przecinku i odcinamy
-    poprzedzający go kod pocztowy.
-    """
-    if not location_name:
-        return None
-    segment = location_name.split(",")[-1].strip()
-    segment = _POSTAL_CODE.sub("", segment).strip()
-    if not segment:
-        return None
-    mapped = _CITY_EXONYMS.get(segment.casefold())
-    return mapped if mapped is not None else segment
 
 
 def _parse_datetime(value: str | None) -> datetime | None:
@@ -72,6 +28,12 @@ def parse_greenhouse(payload: dict, company: str, slug: str) -> list[RawJob]:
     boarda (zbiorcze odświeżenie, nie publikacja pojedynczej oferty), co
     zepsułoby `max_age_days` (stara oferta wyglądałaby jak świeża).
     `updated_at` jest fallbackiem tylko, gdy `first_published` brakuje.
+
+    Greenhouse NIE ma pola boolowskiego dla pracy zdalnej — jedynym nośnikiem
+    tej informacji jest tekst w `location.name` ("Remote", "Remote - Europe").
+    Stąd `is_remote`: bez tego oferta zdalna dostawałaby `remote=False` i
+    `city="Remote"`, więc matcher szukałby miasta z profilu w słowie "remote"
+    i odrzucał każdą ofertę zdalną, także przy `include_remote: true`.
     """
     jobs = []
     for offer in payload.get("jobs") or []:
@@ -80,7 +42,13 @@ def parse_greenhouse(payload: dict, company: str, slug: str) -> list[RawJob]:
             logger.debug("greenhouse(%s): pomijam ofertę bez URL: %r", slug, offer)
             continue
         offer_id = offer.get("id")
-        location = offer.get("location") or {}
+        location_name = (offer.get("location") or {}).get("name")
+        remote = is_remote(location_name)
+        city = extract_city(location_name)
+        if remote and city and is_remote(city):
+            # "Remote" jako całe miasto to nie miasto — zerujemy, żeby nie
+            # trafiło do klucza deduplikacji jako segment "remote".
+            city = None
         posted_at = _parse_datetime(offer.get("first_published")) or _parse_datetime(
             offer.get("updated_at")
         )
@@ -90,8 +58,8 @@ def parse_greenhouse(payload: dict, company: str, slug: str) -> list[RawJob]:
                 external_id=str(offer_id) if offer_id is not None else url,
                 title=offer.get("title", ""),
                 company=company,
-                city=_extract_city(location.get("name")),
-                remote=False,
+                city=city,
+                remote=remote,
                 url=url,
                 salary=None,
                 posted_at=posted_at,
