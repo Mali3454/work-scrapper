@@ -21,13 +21,20 @@ powoduje przegapienia ofert.
 
 ### Co dokładnie znaczy `include_remote: true`
 
-Nie „wszystkie oferty zdalne w Polsce", tylko **oferty zdalne otagowane
-miastami z `locations`**. Portale są odpytywane o konkretne miasta (NoFluffJobs
-ma ścisły filtr miasta), więc oferta zdalna wystawiona wyłącznie pod
-„Warszawa" nie wejdzie do puli przy `locations: [szczecin]`.
+**Oferty zdalne z całej Polski** plus wszystkie oferty (zdalne i stacjonarne)
+z miast wymienionych w `locations`.
 
-Z tego samego powodu **pusta lista `locations` w jednym profilu nie zdejmuje
-filtra miast** — źródła i tak dostaną unię lokalizacji z pozostałych profili.
+Działa to tak, bo portale tagują ofertę zdalną miastem siedziby firmy — Shoper
+ma 18 ofert `remote=True`, wszystkie z `city: Kraków`. Zapytanie wyłącznie o
+Szczecin by ich nie zwróciło, mimo że można na nie pracować ze Szczecina.
+Dlatego przy `include_remote: true` źródła dociągają dodatkowo pulę
+ogólnopolską, a matcher przepuszcza z niej tylko oferty zdalne (stacjonarne
+spoza `locations` odpada).
+
+Koszt: przebieg pobiera ~3700 ofert zamiast ~360 i trwa ok. 12 s zamiast 3 s.
+
+Uwaga: **pusta lista `locations` w jednym profilu nie zdejmuje filtra miast**
+dla pozostałych — źródła dostaną unię lokalizacji ze wszystkich profili.
 Przebieg loguje wtedy ostrzeżenie.
 
 ## Uruchomienie lokalne

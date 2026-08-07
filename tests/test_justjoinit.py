@@ -484,3 +484,32 @@ def test_max_offers_caps_total_across_all_cities_not_per_city(monkeypatch):
     # limit wyczerpał się na pierwszym mieście — drugie w ogóle nie odpytane
     requested_cities = [params.get("city") for _, params in client.calls]
     assert "gdansk" not in requested_cities
+
+
+def test_nationwide_query_is_added_when_flag_set():
+    """Bez zapytania bez filtra miasta oferty zdalne firm spoza profilu
+    (np. Shoper: 18 ofert remote=True, wszystkie z city="Kraków") nigdy nie
+    trafiłyby do puli, mimo `include_remote: true`."""
+    seen_params = []
+
+    def handler(request):
+        seen_params.append(dict(request.url.params))
+        return httpx.Response(200, json={"data": [], "meta": {}})
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        JustJoinIt(cities=["Szczecin"], include_nationwide=True).fetch(client)
+
+    assert [p.get("city") for p in seen_params] == ["Szczecin", None]
+
+
+def test_nationwide_query_absent_when_flag_unset():
+    seen_params = []
+
+    def handler(request):
+        seen_params.append(dict(request.url.params))
+        return httpx.Response(200, json={"data": [], "meta": {}})
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        JustJoinIt(cities=["Szczecin"], include_nationwide=False).fetch(client)
+
+    assert [p.get("city") for p in seen_params] == ["Szczecin"]

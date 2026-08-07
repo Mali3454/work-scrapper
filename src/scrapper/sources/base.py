@@ -82,3 +82,28 @@ def collect(sources: list[Source], client: httpx.Client) -> list[SourceResult]:
     if results and all(result.error for result in results):
         raise AllSourcesFailed("Wszystkie źródła zwróciły błąd")
     return results
+
+
+def build_queries(cities: list[str] | None, include_nationwide: bool) -> list[str | None]:
+    """Buduje listę zapytań źródła: po jednym na miasto, plus opcjonalnie
+    zapytanie bez filtra miasta (`None`).
+
+    Zapytanie ogólnopolskie jest potrzebne dla ofert ZDALNYCH. Portale tagują
+    ofertę zdalną miastem siedziby firmy (np. Shoper: 18 ofert `remote=True`,
+    wszystkie z `city="Kraków"`), więc zapytanie o Szczecin ich nie zwraca —
+    mimo że są to oferty, na które można pracować ze Szczecina. Bez tej puli
+    `include_remote: true` znaczyło w praktyce "zdalne otagowane MOIMI
+    miastami", a nie "zdalne z całej Polski".
+
+    Nic tu nie filtrujemy po zdalności — `matcher._location_ok` już to robi
+    poprawnie: ofertę zdalną przepuszcza niezależnie od miasta, a stacjonarną
+    tylko z miast profilu. Oferta stacjonarna z Krakowa, która wpadnie do puli
+    ogólnopolskiej, zostanie więc odrzucona.
+
+    Miasta idą PIERWSZE, bo mają wyższy priorytet przy dzieleniu budżetu
+    `max_offers` — pula ogólnopolska dostaje to, co zostanie.
+    """
+    queries: list[str | None] = list(cities) if cities else []
+    if include_nationwide or not queries:
+        queries.append(None)
+    return queries

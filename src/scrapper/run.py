@@ -105,9 +105,15 @@ def main() -> None:
     cities = cities_from_profiles(config.profiles)
 
     with build_client() as client:
+        # Gdy którykolwiek profil przyjmuje oferty zdalne, źródła muszą dociągnąć
+        # też pulę ogólnopolską — portale tagują ofertę zdalną miastem siedziby
+        # firmy, więc zapytanie o Szczecin nie zwróci zdalnej oferty firmy z
+        # Krakowa. Matcher i tak odrzuci z tej puli wszystko, co nie jest zdalne
+        # ani w miastach profilu.
+        nationwide = any(profile.include_remote for profile in config.profiles)
         sources = [
-            JustJoinIt(cities=cities),
-            NoFluffJobs(cities=cities),
+            JustJoinIt(cities=cities, include_nationwide=nationwide),
+            NoFluffJobs(cities=cities, include_nationwide=nationwide),
             CompaniesSource(load_companies(COMPANIES_PATH)),
         ]
         count = run(config, sources, STORE_PATH, client, datetime.now(timezone.utc))

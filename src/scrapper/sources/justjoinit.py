@@ -4,7 +4,7 @@ from datetime import datetime
 import httpx
 
 from scrapper.models import RawJob
-from scrapper.sources.base import Source  # noqa: F401 - dokumentuje implementowany protokół
+from scrapper.sources.base import Source, build_queries  # noqa: F401 - Source dokumentuje protokół
 
 logger = logging.getLogger(__name__)
 
@@ -186,12 +186,14 @@ def _fetch_entries_for_city(
 class JustJoinIt:
     name = "justjoinit"
 
-    def __init__(self, max_offers: int = 2000, cities: list[str] | None = None):
+    def __init__(self, max_offers: int = 2000, cities: list[str] | None = None,
+                 include_nationwide: bool = False):
         self.max_offers = max_offers
         self.cities = cities
+        self.include_nationwide = include_nationwide
 
     def fetch(self, client: httpx.Client) -> list[RawJob]:
-        queries = self.cities if self.cities else [None]
+        queries = build_queries(self.cities, self.include_nationwide)
 
         seen_guids: set[str] = set()
         merged_entries: list[dict] = []

@@ -81,3 +81,52 @@
   ats: custom
   url: https://softwaremill.com/join-us/
   parser: skip
+
+# --- Firmy znalezione empirycznie: kandydaci wyciągnięci z ofert otagowanych
+# --- Szczecinem na JustJoinIT/NoFluffJobs (20 firm), następnie każda sprawdzona
+# --- przeciw czterem obsługiwanym ATS-om. Poniżej wyłącznie trafienia.
+
+# Zweryfikowano: GET https://globalwindservice.recruitee.com/api/offers/ → HTTP 200,
+# 28 ofert, company_name "Global Wind Service". NAJLEPSZE TRAFIENIE tego researchu:
+# realne oferty z city="Szczecin" wprost w API (m.in. "Senior Accountant",
+# "IT Supporter - Poland"), obok Koszalina, Dobrej, Fredericii i Hull.
+- name: Global Wind Service
+  ats: recruitee
+  slug: globalwindservice
+  url: https://globalwindservice.recruitee.com/
+
+# Zweryfikowano: GET https://codepepper.recruitee.com/api/offers/ → HTTP 200,
+# 14 ofert, company_name "Code & Pepper". Slug NIE jest oczywisty — "codeandpepper"
+# i "code-and-pepper" zwracają 404; właściwy to "codepepper", ustalony przez
+# przeszukanie ich strony kariery (hostowanej przez Recruitee, companyId 62191).
+# Firma ma oferty otagowane Szczecinem na portalach; wszystkie oferty na własnym
+# boardzie są zdalne.
+- name: Code & Pepper
+  ats: recruitee
+  slug: codepepper
+  url: https://careers.codeandpepper.com/
+
+# Zweryfikowano: GET https://api.lever.co/v0/postings/masterborn-2?mode=json →
+# HTTP 200, 3 oferty. Slug "masterborn-2" (nie "masterborn") odczytany wprost ze
+# skryptu na ich stronie kariery. Oferty zdalne, główna lokalizacja Wrocław;
+# firma ma oferty otagowane Szczecinem na portalach.
+- name: MasterBorn
+  ats: lever
+  slug: masterborn-2
+  url: https://masterborn.com/career
+
+# Shoper — strona kariery (kariera.shoper.pl, HTTP 200) wymienia Szczecin, więc
+# obecność potwierdzona. Brak JAKIEGOKOLWIEK markera zewnętrznego ATS-u w HTML
+# (sprawdzono: recruitee, traffit, lever, greenhouse, workable, smartrecruiters,
+# eRecruiter, elevato, teamtailor, bamboohr) — własny system, parsera nie da się
+# napisać. Jego 18 ofert (wszystkie remote, otagowane Krakowem) i tak wpada teraz
+# do puli przez zapytanie ogólnopolskie na portalach.
+- name: Shoper
+  ats: custom
+  url: https://kariera.shoper.pl/
+  parser: skip
+
+# ODRZUCONE mimo trafienia HTTP 200: https://accenture.recruitee.com/api/offers/
+# zwraca 2 oferty, ale to konto demonstracyjne, NIE Accenture — oferty to
+# "Senior Marketer (Sample)" i "sales executive", obie w Amsterdamie. Dopisanie
+# tego wpisu byłoby wpisaniem do rejestru firmy, której tam nie ma.

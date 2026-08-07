@@ -1,7 +1,7 @@
 import pytest
 
 from scrapper.models import RawJob
-from scrapper.sources.base import AllSourcesFailed, collect
+from scrapper.sources.base import AllSourcesFailed, build_queries, collect
 
 
 class FakeSource:
@@ -56,3 +56,22 @@ def test_empty_results_are_not_treated_as_failure():
     results = collect([FakeSource("a", jobs=[])], client=None)
 
     assert results[0].error is None
+
+
+def test_build_queries_appends_nationwide_after_cities():
+    """Pula ogólnopolska jest potrzebna dla ofert ZDALNYCH: portale tagują je
+    miastem siedziby firmy, więc zapytanie o Szczecin nie zwróci zdalnej oferty
+    firmy z Krakowa. Miasta idą pierwsze — mają priorytet przy dzieleniu
+    budżetu `max_offers`."""
+    assert build_queries(["Szczecin", "Gdańsk"], True) == ["Szczecin", "Gdańsk", None]
+
+
+def test_build_queries_without_nationwide_keeps_only_cities():
+    assert build_queries(["Szczecin"], False) == ["Szczecin"]
+
+
+def test_build_queries_without_cities_always_queries_nationwide():
+    # Brak miast = brak filtra, niezależnie od flagi — inaczej źródło nie
+    # wysłałoby ani jednego zapytania i cicho zwróciło zero ofert.
+    assert build_queries(None, False) == [None]
+    assert build_queries([], False) == [None]
