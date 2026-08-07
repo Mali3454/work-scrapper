@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 import pytest
 
 from scrapper.models import Config, Profile, RawJob, SmtpConfig
-from scrapper.run import cities_from_profiles, run
+from scrapper.run import categories_from_profiles, cities_from_profiles, run
 from scrapper.sources.base import AllSourcesFailed
 from scrapper.store import load_seen
 
@@ -181,3 +181,17 @@ def test_cities_from_profiles_returns_none_when_no_locations():
     profiles = [Profile(name="a", keywords=["react"], locations=[])]
 
     assert cities_from_profiles(profiles) is None
+
+
+def test_categories_from_profiles_unions_and_deduplicates():
+    profiles = [
+        Profile(name="a", keywords=["x"], nofluffjobs_categories=["frontend", "mobile"]),
+        Profile(name="b", keywords=["y"], nofluffjobs_categories=["Frontend", "fullstack"]),
+    ]
+
+    assert categories_from_profiles(profiles) == ["frontend", "mobile", "fullstack"]
+
+
+def test_categories_from_profiles_returns_none_when_unset():
+    # None, nie [] — pusta lista trafiłaby do zapytania jako pusty filtr.
+    assert categories_from_profiles([Profile(name="a", keywords=["x"])]) is None

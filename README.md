@@ -31,7 +31,35 @@ Dlatego przy `include_remote: true` źródła dociągają dodatkowo pulę
 ogólnopolską, a matcher przepuszcza z niej tylko oferty zdalne (stacjonarne
 spoza `locations` odpada).
 
-Koszt: przebieg pobiera ~3700 ofert zamiast ~360 i trwa ok. 12 s zamiast 3 s.
+Koszt: przebieg pobiera ~4100 ofert zamiast ~360 i trwa ok. 13 s zamiast 3 s.
+
+### `nofluffjobs_categories` — bez tego NoFluffJobs prawie nic nie dowozi
+
+NoFluffJobs ma ~21 600 ofert ogólnopolsko, **nie sortuje po dacie** i ignoruje
+parametry sortowania (sprawdzone: `sort`, `rawSearch`). Pobranie budżetowego
+wycinka daje więc losowy przekrój, w którym świeże oferty bywają nieobecne — w
+pomiarze przed poprawką NFJ dawał **0 dopasowań**, bo wszystkie cztery znalezione
+oferty frontendowe miały 18–24 dni przy `max_age_days: 14`.
+
+Filtr kategorii zawęża pulę po stronie serwera do rozmiaru, który da się pobrać
+**w całości** — a wtedy kolejność przestaje mieć znaczenie. Rozmiary kategorii
+(2026-08-07): `frontend` 508, `mobile` 419, `fullstack` 1274, `testing` 1273,
+`devops` 1474, `data` 2832, `backend` 3461, `embedded` 199.
+
+**Literówka w nazwie kategorii nie daje błędu** — API zwraca HTTP 200 i zero
+ofert. Objawi się ostrzeżeniem „nofluffjobs zwróciło 0 ofert" w stopce maila
+i jako `::warning::` w logu Actions.
+
+## Czego ten agregator nie znajdzie
+
+JustJoinIT i NoFluffJobs to portale **IT**. Oferty inżynieryjno-budowlane —
+np. dla **Tekla Structures** — praktycznie na nich nie występują. Sprawdzone na
+żywo 2026-08-07: 0 trafień na „tekla" w 4000 ofert JustJoinIT, 0 w 6000 ofert
+NoFluffJobs, 0 wśród 55 ofert z rejestru firm.
+
+Takie oferty są na Pracuj.pl i OLX, które są **poza zakresem** tego projektu:
+blokują ruch z zakresów adresowych GitHuba i wymagają realnej przeglądarki
+(patrz „Znane ryzyka" w specyfikacji). Wymagałoby to przeniesienia na VPS.
 
 Uwaga: **pusta lista `locations` w jednym profilu nie zdejmuje filtra miast**
 dla pozostałych — źródła dostaną unię lokalizacji ze wszystkich profili.

@@ -109,7 +109,8 @@ def parse(payload: dict | list) -> list[RawJob]:
     return jobs
 
 
-def _fetch_entries_for_city(client: httpx.Client, city: str | None, max_offers: int) -> list[dict]:
+def _fetch_entries_for_city(client: httpx.Client, city: str | None, max_offers: int,
+                            categories: list[str] | None = None) -> list[dict]:
     """Pobiera surowe wpisy `postings[]` dla jednego zapytania (miasto albo brak filtra).
 
     Paginacja przez parametr query string `page` (1-indeksowany; brak
@@ -129,7 +130,12 @@ def _fetch_entries_for_city(client: httpx.Client, city: str | None, max_offers: 
     """
     entries: list[dict] = []
     page = 1
-    body = {"criteriaSearch": {"city": [city]} if city else {}}
+    criteria: dict = {}
+    if city:
+        criteria["city"] = [city]
+    if categories:
+        criteria["category"] = list(categories)
+    body = {"criteriaSearch": criteria}
 
     while len(entries) < max_offers:
         params = {**_REQUIRED_PARAMS, "page": page}
@@ -162,11 +168,17 @@ def _fetch_entries_for_city(client: httpx.Client, city: str | None, max_offers: 
 class NoFluffJobs:
     name = "nofluffjobs"
 
-    def __init__(self, max_offers: int = 2000, cities: list[str] | None = None,
-                 include_nationwide: bool = False):
+    # Budżet musi POKRYĆ całą pulę po filtrze kategorii, inaczej znów zbieramy
+    # arbitralny wycinek — a NFJ nie sortuje po dacie, więc ucięcie oznacza
+    # losowo pominięte świeże oferty. frontend+fullstack+mobile to ~2200 ofert,
+    # stąd 3500 z zapasem. Bez filtra kategorii pula ma ~21600 i budżet i tak
+    # jej nie obejmie (patrz docs/sources.md).
+    def __init__(self, max_offers: int = 3500, cities: list[str] | None = None,
+                 include_nationwide: bool = False, categories: list[str] | None = None):
         self.max_offers = max_offers
         self.cities = cities
         self.include_nationwide = include_nationwide
+        self.categories = categories
 
     def fetch(self, client: httpx.Client) -> list[RawJob]:
         queries = build_queries(self.cities, self.include_nationwide)
@@ -183,7 +195,8 @@ class NoFluffJobs:
                 )
                 break
 
-            for entry in _fetch_entries_for_city(client, city, remaining_budget):
+            for entry in _fetch_entries_for_city(client, city, remaining_budget,
+                                                 categories=self.categories):
                 posting_id = entry.get("id")
                 if posting_id:
                     if posting_id in seen_ids:

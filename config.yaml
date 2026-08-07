@@ -7,8 +7,33 @@ smtp:
 
 profiles:
   - name: frontend-szczecin
-    keywords: [frontend, react]
-    exclude: [senior]
+    keywords: [frontend, react, javascript, typescript, angular, vue]
+    exclude: [senior, lead, staff, architect]
     locations: [szczecin]
     include_remote: true
     max_age_days: 14
+    # Bez tego NoFluffJobs praktycznie nic nie dowoził: ma ~21600 ofert
+    # ogólnopolsko, nie sortuje po dacie i nie przyjmuje parametru sortowania,
+    # więc budżetowy wycinek 2000 ofert był losowym przekrojem bez świeżych
+    # trafień. Te trzy kategorie to razem ~2250 ofert — pobierane W CAŁOŚCI,
+    # więc kolejność przestaje mieć znaczenie.
+    # Dostępne kategorie i ich rozmiary (sprawdzone na żywo 2026-08-07):
+    #   frontend 508, fullstack 1274, backend 3461, testing 1273,
+    #   devops 1474, mobile 419, data 2832, embedded 199
+    # UWAGA: literówka w nazwie kategorii NIE daje błędu — API zwraca 0 ofert.
+    # Objawi się ostrzeżeniem "nofluffjobs zwróciło 0 ofert" w stopce maila.
+    nofluffjobs_categories: [frontend, fullstack, mobile]
+
+  # Tekla Structures — patrz README, sekcja "Czego ten agregator nie znajdzie".
+  # JustJoinIT i NoFluffJobs to portale IT i NIE mają ofert z Teklą (sprawdzone
+  # na żywo: 0 trafień w 4000 ofert JJIT, 0 w 6000 ofert NFJ, 0 u firm z
+  # rejestru). Ten profil nic nie przyniesie, dopóki nie dojdzie źródło z
+  # ofertami inżynieryjno-budowlanymi (Pracuj.pl — poza zakresem, blokuje IP
+  # GitHuba). Zostaje włączony, bo nic nie kosztuje i złapie ofertę, gdyby
+  # któraś firma z `companies.yaml` taką wystawiła.
+  - name: tekla
+    keywords: [tekla, "tekla structures", konstruktor, "projektant konstrukcji"]
+    exclude: []
+    locations: [szczecin]
+    include_remote: true
+    max_age_days: 30

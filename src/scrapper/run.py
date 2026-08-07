@@ -99,6 +99,25 @@ def cities_from_profiles(profiles: list[Profile]) -> list[str] | None:
     return cities or None
 
 
+def categories_from_profiles(profiles: list[Profile]) -> list[str] | None:
+    """Unia kategorii NoFluffJobs ze wszystkich profili, albo `None` (bez filtra).
+
+    `None` zamiast pustej listy jest istotne: pusta lista w `criteriaSearch`
+    znaczyłaby dla API "kategoria z pustego zbioru", a chcemy w tym przypadku
+    nie wysyłać klucza `category` w ogóle.
+    """
+    categories: list[str] = []
+    seen: set[str] = set()
+    for profile in profiles:
+        for category in profile.nofluffjobs_categories:
+            key = category.casefold()
+            if key in seen:
+                continue
+            seen.add(key)
+            categories.append(category)
+    return categories or None
+
+
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     config = load_config(CONFIG_PATH, env=os.environ)
@@ -111,9 +130,11 @@ def main() -> None:
         # Krakowa. Matcher i tak odrzuci z tej puli wszystko, co nie jest zdalne
         # ani w miastach profilu.
         nationwide = any(profile.include_remote for profile in config.profiles)
+        nfj_categories = categories_from_profiles(config.profiles)
         sources = [
             JustJoinIt(cities=cities, include_nationwide=nationwide),
-            NoFluffJobs(cities=cities, include_nationwide=nationwide),
+            NoFluffJobs(cities=cities, include_nationwide=nationwide,
+                        categories=nfj_categories),
             CompaniesSource(load_companies(COMPANIES_PATH)),
         ]
         count = run(config, sources, STORE_PATH, client, datetime.now(timezone.utc))

@@ -40,6 +40,18 @@ class Profile(BaseModel):
     locations: list[str] = Field(default_factory=list)
     include_remote: bool = True
     max_age_days: int = 14
+    # Kategorie NoFluffJobs zawężające zapytanie PO STRONIE SERWERA.
+    # NFJ ma ~21600 ofert ogólnopolsko, nie sortuje po dacie i nie przyjmuje
+    # żadnego parametru sortowania (sprawdzone: `sort`, `rawSearch`), więc
+    # pobranie budżetowego wycinka daje losowy przekrój, w którym świeże oferty
+    # bywają nieobecne. Filtr kategorii zbija pulę do rozmiaru, który da się
+    # pobrać W CAŁOŚCI (frontend: 508, fullstack: 1274) — a wtedy kolejność
+    # przestaje mieć znaczenie.
+    #
+    # UWAGA: nieistniejąca kategoria zwraca HTTP 200 i totalCount=0, nie błąd.
+    # Literówka cicho wyzeruje źródło — ratunkiem jest ostrzeżenie "0 ofert"
+    # w logu Actions i w stopce maila. Pusta lista = bez filtra (stare zachowanie).
+    nofluffjobs_categories: list[str] = Field(default_factory=list)
 
 
 class SmtpConfig(BaseModel):

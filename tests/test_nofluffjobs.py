@@ -337,3 +337,36 @@ def test_fetch_tags_entries_with_queried_city():
         jobs = NoFluffJobs(cities=["Szczecin"]).fetch(client)
 
     assert jobs[0].city == "Szczecin"
+
+
+def test_category_filter_is_sent_in_criteria_search():
+    """NFJ ma ~21600 ofert, nie sortuje po dacie i ignoruje parametry
+    sortowania — bez zawężenia po stronie serwera budżetowy wycinek jest
+    losowym przekrojem bez świeżych ofert. Filtr kategorii zbija pulę do
+    rozmiaru, który da się pobrać w całości."""
+    bodies = []
+
+    def handler(request):
+        bodies.append(json.loads(request.content))
+        return httpx.Response(200, json={"postings": [], "totalCount": 0})
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        NoFluffJobs(cities=["Szczecin"], categories=["frontend", "fullstack"]).fetch(client)
+
+    assert bodies[0]["criteriaSearch"]["category"] == ["frontend", "fullstack"]
+    assert bodies[0]["criteriaSearch"]["city"] == ["Szczecin"]
+
+
+def test_no_category_key_when_categories_absent():
+    # Pusty klucz `category` znaczyłby dla API "kategoria z pustego zbioru";
+    # brak filtra musi oznaczać brak klucza.
+    bodies = []
+
+    def handler(request):
+        bodies.append(json.loads(request.content))
+        return httpx.Response(200, json={"postings": [], "totalCount": 0})
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        NoFluffJobs(cities=["Szczecin"], categories=None).fetch(client)
+
+    assert "category" not in bodies[0]["criteriaSearch"]
