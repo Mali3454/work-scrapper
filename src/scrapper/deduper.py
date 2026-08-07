@@ -53,9 +53,22 @@ def deduplicate(jobs: list[RawJob], now: datetime) -> list[Job]:
         if existing is None:
             best[key] = candidate
             continue
+        # Ta sama oferta pasująca do dwóch profili trafia tu dwa razy z tym
+        # samym URL-em. Bez tego filtra dostawałaby w mailu link "także tutaj"
+        # prowadzący pod ten sam adres co link główny.
         if priority_of(candidate.source) > priority_of(existing.source):
-            candidate.alt_urls = [*existing.alt_urls, existing.url]
+            candidate.alt_urls = _without_duplicates(
+                [*existing.alt_urls, existing.url], candidate.url
+            )
             best[key] = candidate
-        else:
+        elif candidate.url != existing.url and candidate.url not in existing.alt_urls:
             existing.alt_urls.append(candidate.url)
     return list(best.values())
+
+
+def _without_duplicates(urls: list[str], main_url: str) -> list[str]:
+    result = []
+    for url in urls:
+        if url != main_url and url not in result:
+            result.append(url)
+    return result

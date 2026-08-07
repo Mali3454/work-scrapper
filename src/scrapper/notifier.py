@@ -1,4 +1,5 @@
 import smtplib
+import ssl
 from email.message import EmailMessage
 from pathlib import Path
 
@@ -62,7 +63,13 @@ def send(smtp: SmtpConfig, subject: str, html: str, sender=smtplib.SMTP) -> None
     message.set_content("Ta wiadomość wymaga klienta obsługującego HTML.")
     message.add_alternative(html, subtype="html")
 
+    # `starttls()` BEZ kontekstu używa `ssl._create_stdlib_context()`, który ma
+    # `check_hostname=False` i `verify_mode=CERT_NONE` — połączenie byłoby
+    # szyfrowane, ale nieuwierzytelnione, więc MITM na porcie 587 dostałby w
+    # `login()` hasło aplikacji Gmail w plaintekście. To jedyna ścieżka w całym
+    # systemie, którą płynie sekret — musi weryfikować certyfikat tak samo jak
+    # klient HTTP (patrz `sources/base.py`).
     with sender(smtp.host, smtp.port) as server:
-        server.starttls()
+        server.starttls(context=ssl.create_default_context())
         server.login(smtp.user, smtp.password)
         server.send_message(message)

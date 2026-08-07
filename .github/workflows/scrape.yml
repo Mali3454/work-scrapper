@@ -15,6 +15,10 @@ permissions:
 jobs:
   scrape:
     runs-on: ubuntu-latest
+    # Bez tego zawieszony run (np. źródło, które przyjmuje połączenie i milczy)
+    # trzymałby grupę `concurrency` przez domyślne 6 godzin, blokując kolejne
+    # przebiegi crona.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

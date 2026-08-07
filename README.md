@@ -19,6 +19,17 @@ powoduje przegapienia ofert.
 2. Dostosuj `config.yaml` — słowa kluczowe, miasta, wykluczenia.
 3. Dostosuj `companies.yaml` — lista firm do sprawdzania stron karier.
 
+### Co dokładnie znaczy `include_remote: true`
+
+Nie „wszystkie oferty zdalne w Polsce", tylko **oferty zdalne otagowane
+miastami z `locations`**. Portale są odpytywane o konkretne miasta (NoFluffJobs
+ma ścisły filtr miasta), więc oferta zdalna wystawiona wyłącznie pod
+„Warszawa" nie wejdzie do puli przy `locations: [szczecin]`.
+
+Z tego samego powodu **pusta lista `locations` w jednym profilu nie zdejmuje
+filtra miast** — źródła i tak dostaną unię lokalizacji z pozostałych profili.
+Przebieg loguje wtedy ostrzeżenie.
+
 ## Uruchomienie lokalne
 
 ```bash

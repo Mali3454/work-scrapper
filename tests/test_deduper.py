@@ -113,3 +113,24 @@ def test_company_slug_sa_is_not_empty_and_differs_from_acme():
 
     assert sa_slug != ""
     assert sa_slug != acme_slug
+
+
+def test_same_offer_matching_two_profiles_gets_no_self_link():
+    """Oferta pasująca do dwóch profili trafia do deduplikacji dwa razy z tym
+    samym URL-em — nie może dostać w mailu linku "także tutaj" na siebie."""
+    job = _job(source="justjoinit", url="https://justjoin.it/1")
+
+    result = deduplicate([job, job], NOW)
+
+    assert len(result) == 1
+    assert result[0].alt_urls == []
+
+
+def test_alt_urls_do_not_repeat_the_same_source_url():
+    portal = _job(source="justjoinit", url="https://justjoin.it/1")
+    company = _job(source="company:acme", url="https://acme.com/1")
+
+    result = deduplicate([portal, portal, company], NOW)
+
+    assert result[0].url == "https://acme.com/1"
+    assert result[0].alt_urls == ["https://justjoin.it/1"]

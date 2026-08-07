@@ -4,6 +4,7 @@ from datetime import datetime
 import httpx
 
 from scrapper.models import RawJob
+from scrapper.sources.ats.location import extract_city
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +50,11 @@ def parse_workable(payload: dict, company: str, slug: str) -> list[RawJob]:
                 external_id=str(shortcode) if shortcode else url,
                 title=offer.get("title", ""),
                 company=company,
-                city=offer.get("city") or None,
+                # Przez wspólną normalizację, jak Greenhouse i Lever — Workable
+                # ma osobne pole `city`, więc adres/kraj się tu nie trafi, ale
+                # egzonimy i marker "Remote" muszą działać tak samo we
+                # wszystkich ATS-ach, inaczej dedup między nimi się rozjeżdża.
+                city=extract_city(offer.get("city")),
                 remote=bool(offer.get("telecommuting")),
                 url=url,
                 salary=None,

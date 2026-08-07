@@ -41,6 +41,13 @@ def run(config: Config, sources: list[Source], store_path: Path, client,
             f"Żadne z {len(results)} źródeł nie zwróciło ani jednej oferty"
         )
     warnings = warnings_from(results)
+    for warning in warnings:
+        # Ostrzeżenia lądują w stopce maila, ale mail idzie tylko przy nowych
+        # ofertach — a większość przebiegów ich nie ma. Zgniły parser byłby
+        # więc niewidoczny przez dni. `::warning::` wyświetla się w
+        # podsumowaniu runu GitHub Actions niezależnie od maila.
+        logger.warning(warning)
+        print(f"::warning::{warning}")
 
     matched = []
     for profile in config.profiles:
@@ -73,6 +80,16 @@ def cities_from_profiles(profiles: list[Profile]) -> list[str] | None:
     cities: list[str] = []
     seen_normalized: set[str] = set()
     for profile in profiles:
+        if not profile.locations:
+            # Pusta lista lokalizacji w JEDNYM profilu nie zdejmuje filtra
+            # miast z zapytań — źródła i tak dostaną unię z pozostałych
+            # profili. Profil "tylko zdalne" zobaczy więc wyłącznie oferty
+            # otagowane miastami innych profili, a nie pulę ogólnopolską.
+            logger.warning(
+                "Profil %s nie ma lokalizacji — źródła i tak zostaną odpytane "
+                "tylko o miasta z pozostałych profili (%s)",
+                profile.name, cities or "brak",
+            )
         for location in profile.locations:
             key = location.casefold()
             if key in seen_normalized:

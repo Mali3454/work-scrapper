@@ -442,3 +442,18 @@ def test_workable_fetch_raises_on_http_error():
     with httpx.Client(transport=httpx.MockTransport(handler)) as client:
         with pytest.raises(httpx.HTTPStatusError):
             fetch_workable(entry, client)
+
+
+def test_workable_uses_shared_city_normalization():
+    """Workable był jedynym parserem ATS omijającym wspólną normalizację, więc
+    "Stettin" i "Remote" zachowywały się tam inaczej niż w Greenhouse/Lever —
+    czyli dedup między ATS-ami się rozjeżdżał."""
+    payload = {"jobs": [
+        {"shortcode": "A", "title": "Dev", "url": "https://x/1", "city": "Stettin"},
+        {"shortcode": "B", "title": "Dev", "url": "https://x/2", "city": "Remote"},
+        {"shortcode": "C", "title": "Dev", "url": "https://x/3", "city": ""},
+    ]}
+
+    cities = [job.city for job in parse_workable(payload, company="Acme", slug="acme")]
+
+    assert cities == ["Szczecin", None, None]

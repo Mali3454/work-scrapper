@@ -6,7 +6,7 @@ import httpx
 import pytest
 
 from scrapper.sources import nofluffjobs as nfj
-from scrapper.sources.nofluffjobs import NoFluffJobs, parse
+from scrapper.sources.nofluffjobs import QUERIED_CITY_KEY, NoFluffJobs, parse
 
 FIXTURE = Path(__file__).parent / "fixtures" / "nofluffjobs.json"
 
@@ -289,3 +289,51 @@ def test_first_page_http_error_propagates():
 
     with pytest.raises(httpx.HTTPStatusError):
         NoFluffJobs().fetch(client)
+
+
+def test_multi_city_offer_uses_queried_city_not_first_in_list():
+    """Oferta w kilku miastach musi dostać to, o które pytaliśmy.
+
+    Bez tego oferta stacjonarna, w której Szczecin nie jest pierwszy w
+    `places`, dostawała `city="Warszawa"` i wypadała w matcherze — mimo że
+    API zwróciło ją właśnie dla filtra `city=szczecin`. Cicha utrata oferty
+    docelowej, bez logu.
+    """
+    entry = {
+        "id": "abc", "url": "praca/x", "title": "Frontend Developer",
+        "name": "Acme",
+        "location": {"fullyRemote": False, "places": [
+            {"city": "Warszawa"}, {"city": "Kraków"}, {"city": "Szczecin"},
+        ]},
+        QUERIED_CITY_KEY: "szczecin",
+    }
+
+    assert parse({"postings": [entry]})[0].city == "Szczecin"
+
+
+def test_multi_city_offer_without_query_tag_falls_back_to_first():
+    entry = {
+        "id": "abc", "url": "praca/x", "title": "Frontend Developer",
+        "name": "Acme",
+        "location": {"fullyRemote": False, "places": [
+            {"city": "Warszawa"}, {"city": "Szczecin"},
+        ]},
+    }
+
+    assert parse({"postings": [entry]})[0].city == "Warszawa"
+
+
+def test_fetch_tags_entries_with_queried_city():
+    payload = {"postings": [{"id": "abc", "url": "praca/x", "title": "Frontend Developer",
+                             "name": "Acme",
+                             "location": {"fullyRemote": False,
+                                          "places": [{"city": "Warszawa"}, {"city": "Szczecin"}]}}],
+               "totalCount": 1}
+
+    def handler(request):
+        return httpx.Response(200, json=payload)
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        jobs = NoFluffJobs(cities=["Szczecin"]).fetch(client)
+
+    assert jobs[0].city == "Szczecin"

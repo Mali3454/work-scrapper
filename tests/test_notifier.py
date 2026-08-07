@@ -1,3 +1,4 @@
+import ssl
 from datetime import datetime, timezone
 
 from scrapper.models import Job, SmtpConfig
@@ -37,8 +38,9 @@ class FakeSMTP:
     def __exit__(self, *args):
         return False
 
-    def starttls(self):
+    def starttls(self, context=None):
         self.started_tls = True
+        self.tls_context = context
 
     def login(self, user, password):
         self.logged_in_as = user
@@ -148,3 +150,19 @@ def test_send_uses_tls_login_and_sends(monkeypatch):
     assert len(smtp.sent) == 1
     assert smtp.sent[0]["To"] == "olosolo16@gmail.com"
     assert smtp.sent[0]["Subject"] == "Temat"
+
+
+def test_send_verifies_smtp_certificate():
+    """`starttls()` bez kontekstu daje `check_hostname=False` i
+    `verify_mode=CERT_NONE` — połączenie szyfrowane, ale nieuwierzytelnione,
+    więc MITM na porcie 587 zbiera hasło aplikacji z `login()`. To jedyna
+    ścieżka w systemie niosąca sekret.
+    """
+    FakeSMTP.instances.clear()
+
+    send(SMTP, subject="Temat", html="<p>cześć</p>", sender=FakeSMTP)
+
+    context = FakeSMTP.instances[0].tls_context
+    assert context is not None
+    assert context.check_hostname is True
+    assert context.verify_mode is ssl.CERT_REQUIRED

@@ -25,15 +25,35 @@ _REQUIRED_PARAMS = {"salaryCurrency": "PLN", "salaryPeriod": "month"}
 _PAGE_SIZE = 20
 
 
+# Klucz, którym `fetch` znakuje wpis miastem, dla którego został pobrany.
+# Potrzebny, bo pojedyncza oferta bywa w kilkunastu miastach, a odpowiedź nie
+# mówi, które z nich pasowało do zapytania.
+QUERIED_CITY_KEY = "_queried_city"
+
+
 def _location(entry: dict) -> tuple[str | None, bool]:
     location = entry.get("location") or {}
     places = location.get("places") or []
     remote = bool(location.get("fullyRemote"))
-    city = next(
-        (place.get("city") for place in places if place.get("city") and place.get("city") != "Remote"),
-        None,
-    )
-    return city, remote
+
+    cities = [
+        place.get("city") for place in places
+        if place.get("city") and place.get("city") != "Remote"
+    ]
+
+    # Oferta w kilku miastach: bierzemy to, o które PYTALIŚMY, a nie pierwsze z
+    # listy. Bez tego oferta stacjonarna w 8 miastach, w której Szczecin nie
+    # jest pierwszy, dostawała `city="Warszawa"` i wypadała w matcherze — mimo
+    # że API zwróciło ją właśnie dla filtra `city=szczecin`. Dziś API układa
+    # pytane miasto pierwsze, ale to zachowanie nieudokumentowane i nie ma po
+    # co na nim polegać.
+    queried = entry.get(QUERIED_CITY_KEY)
+    if queried:
+        match = next((c for c in cities if c.casefold() == queried.casefold()), None)
+        if match:
+            return match, remote
+
+    return (cities[0] if cities else None), remote
 
 
 def _salary(entry: dict) -> str | None:
@@ -167,6 +187,8 @@ class NoFluffJobs:
                     if posting_id in seen_ids:
                         continue
                     seen_ids.add(posting_id)
+                if city:
+                    entry[QUERIED_CITY_KEY] = city
                 merged_entries.append(entry)
 
         return parse({"postings": merged_entries})
