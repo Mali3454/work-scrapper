@@ -11,6 +11,7 @@ from scrapper.matcher import filter_jobs
 from scrapper.models import Config, Profile
 from scrapper.notifier import render, send, subject_for, warnings_from
 from scrapper.sources.base import Source, build_client, collect
+from scrapper.sources.companies import CompaniesSource, load_companies
 from scrapper.sources.justjoinit import JustJoinIt
 from scrapper.sources.nofluffjobs import NoFluffJobs
 from scrapper.store import append, load_seen, select_new
@@ -20,6 +21,7 @@ logger = logging.getLogger(__name__)
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG_PATH = ROOT / "config.yaml"
 STORE_PATH = ROOT / "data" / "jobs.jsonl"
+COMPANIES_PATH = ROOT / "companies.yaml"
 
 
 def run(config: Config, sources: list[Source], store_path: Path, client,
@@ -73,7 +75,11 @@ def main() -> None:
     cities = cities_from_profiles(config.profiles)
 
     with build_client() as client:
-        sources = [JustJoinIt(cities=cities), NoFluffJobs(cities=cities)]
+        sources = [
+            JustJoinIt(cities=cities),
+            NoFluffJobs(cities=cities),
+            CompaniesSource(load_companies(COMPANIES_PATH)),
+        ]
         count = run(config, sources, STORE_PATH, client, datetime.now(timezone.utc))
     print(f"nowe_oferty={count}")
 

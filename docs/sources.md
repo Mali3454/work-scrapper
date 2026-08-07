@@ -396,3 +396,133 @@ jedna stacjonarna z podanymi widełkami B2B, jedna zdalna — "Remote" wśród
 widełkami typu "permanent". Wariant "bez podanych widełek" nie występuje w
 fixture, bo nie zaobserwowano go w żadnej z >1400 zbadanych ofert — patrz
 wyżej).
+
+## Recruitee
+
+### Endpoint
+
+```
+GET https://<slug>.recruitee.com/api/offers/
+```
+
+Publiczny, nieautoryzowany endpoint per firma — `<slug>` to nazwa firmy w jej
+instancji Recruitee (widoczna też w adresie strony kariery, np.
+`https://espeo.recruitee.com/`). Nie ma jednego globalnego endpointu — Task
+14 musiał znaleźć konkretne firmy używające Recruitee i ich slugi (patrz
+`task-14-report.md` w `.superpowers/sdd/2026-08-06-job-scraper/` po pełną
+tabelę zweryfikowanych firm i metodę ustalenia ATS-u każdej z nich).
+
+**Weryfikacja slugów — metoda:** próba `GET
+https://<kandydat>.recruitee.com/api/offers/` dla kilkudziesięciu polskich
+firm IT. Trafienie (HTTP 200 + realny JSON z `offers[]`) potwierdzone m.in.
+dla `espeo` (Espeo Software), `tensquaregames` (Ten Square Games), `droptica`
+(Droptica) — nietrafione próby (BLStream, SoftwareMill, Unity Group, Netguru,
+Spyrosoft, Coderivium, home.pl, Arvato Systems, Solwit, Sii, Infakt,
+TietoEVRY, Cyfrowy Polsat) zwracały HTTP 404 — te firmy używają innych
+systemów (patrz `companies.yaml` i raport Task 14 po ustalenia per firma).
+
+### Wymagane nagłówki
+
+Brak — zapytanie anonimowe bez `User-Agent` też działa (testowano `curl` bez
+żadnych nagłówków), ale w implementacji używany jest ten sam `User-Agent`
+przeglądarki co w pozostałych źródłach (`build_client()`), żeby nie wyróżniać
+się z ruchu.
+
+### Data weryfikacji
+
+2026-08-06 (firma testowa: Espeo Software, `https://espeo.recruitee.com/api/offers/`)
+
+### Kształt odpowiedzi (korzeń)
+
+```json
+{
+  "offers": [ /* lista obiektów oferty, patrz niżej */ ]
+}
+```
+
+Brak paginacji w tym endponcie — zwraca wszystkie aktualnie opublikowane
+oferty firmy naraz (w zbadanej próbce: 6 ofert dla Espeo Software, bez
+żadnego parametru strony/limitu w odpowiedzi).
+
+Fixture (`tests/fixtures/recruitee.json`) przycięty do 3 ofert z realnej
+odpowiedzi API Espeo Software, z polami nieistotnymi dla parsera (ogromne
+bloki HTML w `description`/`requirements`/`translations`, `open_questions`,
+`cover_image` itd.) odrzuconymi — zachowane pola to dokładnie te, których
+używa/mógłby użyć `parse_recruitee`, wartości niezmienione względem
+oryginalnej odpowiedzi.
+
+### Struktura pojedynczej oferty (pola istotne)
+
+Każdy element `offers[]` to obiekt z (m.in.) polami:
+
+```
+id                  — liczbowy identyfikator oferty, unikalny w obrębie firmy
+guid                — krótki alfanumeryczny identyfikator (używany w mailbox_email)
+slug                — slug użyty w careers_url
+title               — tytuł stanowiska
+company_name        — nazwa firmy WEDŁUG PAYLOADU API — Task 14 celowo jej
+                       NIE używa (patrz sekcja mapowania niżej)
+city                — miasto (string), obserwowane: zawsze siedziba firmy
+                       (Poznań), NIE miejsce wykonywania pracy przy ofertach
+                       zdalnych — patrz uwaga o `remote` niżej
+country / country_code — kraj
+location            — string opisowy złożony z (miasto, województwo, kraj)
+                       ALBO literalnie `"Remote job"` dla ofert zdalnych
+remote              — bool, **prawdziwe pole boolowskie zwracane przez API** —
+                       NIE trzeba go wyprowadzać heurystyką słów kluczowych
+                       z `location` (w przeciwieństwie do JustJoinIT/NoFluffJobs,
+                       gdzie taki wprost dostępny bool nie istniał)
+on_site / hybrid    — dodatkowe flagi bool; `hybrid` było `true` na WSZYSTKICH
+                       6 zbadanych ofertach (także tych z `remote: true`) —
+                       wygląda na ogólną politykę firmy ("oferujemy model
+                       hybrydowy"), NIE na cechę konkretnej oferty; NIE
+                       używane w mapowaniu
+careers_url          — pełny URL strony oferty — GOTOWY, nie trzeba budować
+careers_apply_url    — pełny URL formularza aplikacyjnego (careers_url + `/c/new`)
+published_at         — data publikacji w formacie `"YYYY-MM-DD HH:MM:SS UTC"`
+                       — **UWAGA: NIE jest to ISO 8601** (spacja zamiast `T`,
+                       literalny sufiks `"UTC"` zamiast `Z`/offsetu) —
+                       `datetime.fromisoformat` rzuci `ValueError` bez
+                       wcześniejszego odcięcia sufiksu ` UTC`
+salary                — obiekt `{min, max, period, currency}`; we WSZYSTKICH
+                       3 ofertach fixture'a wszystkie pola `null` (Espeo nie
+                       podaje widełek w tych konkretnych ofertach) — parser
+                       mimo to buduje string, gdy `min`/`max` są obecne
+status                — `"published"` w całej próbce; oferty niepublikowane/
+                       zamknięte prawdopodobnie w ogóle nie występują w tym
+                       endponcie (nie zaobserwowano innego statusu)
+```
+
+### Mapowanie pól → `RawJob`
+
+| Pole w API | Pole w RawJob | Uwagi |
+| --- | --- | --- |
+| `id` | `external_id` | `str(id)`; fallback na `url`, gdyby `id` kiedyś brakowało |
+| `title` | `title` | bez zmian |
+| — (parametr `company` przekazany do `parse_recruitee`) | `company` | **CELOWO NIE `company_name` z payloadu** — nazwa firmy pochodzi z `companies.yaml` (rejestru), żeby była spójna z tym, jak ta sama firma mogłaby się nazywać na innych źródłach, i żeby deduplikacja (`deduper.py`) grupowała poprawnie |
+| `city` | `city` | bez zmian |
+| `remote` | `remote` | **wprost z API**, bool — nie trzeba heurystyki |
+| `careers_url` (fallback `careers_apply_url`) | `url` | gotowy URL, nie trzeba budować |
+| `salary` (obiekt) | `salary` | string budowany z `min`/`max`/`currency`/`period`, tylko gdy `min` i `max` oba obecne; w fixture zawsze `None` (żadna z 3 ofert nie ma podanych widełek) |
+| `published_at` | `posted_at` | wymaga odcięcia sufiksu `" UTC"` przed `datetime.fromisoformat` (patrz wyżej) |
+| — (parametr `slug` przekazany do `parse_recruitee`) | `source` | ustawiane na `f"company:{slug}"` — prefiks `company:` daje najwyższy priorytet w `priority_of` (`deduper.py`), więc link firmowy wygrywa z portalowym przy tej samej ofercie |
+
+### Pola, których NIE MA / nie są używane
+
+- Brak paginacji — cały zbiór ofert firmy w jednej odpowiedzi (żadnego
+  `page`/`cursor`/`from` parametru w tym endponcie).
+- `on_site` i `hybrid` — obecne w payloadzie, ale niewiarygodne jako cecha
+  pojedynczej oferty (patrz wyżej, `hybrid: true` na wszystkim); nieużywane.
+- `company_name` z payloadu — istnieje, ale celowo pominięty na rzecz nazwy
+  z rejestru `companies.yaml` (patrz mapowanie).
+- Format `published_at` różni się od ISO 8601 używanego przez JustJoinIT —
+  Recruitee to inny dostawca API niż JustJoinIT/NoFluffJobs, więc nie ma
+  powodu zakładać spójnego formatu dat między źródłami.
+
+Fixture: `tests/fixtures/recruitee.json` (przycięty do 3 ofert realnej firmy
+Espeo Software: jedna stacjonarna w Poznaniu bez podanych widełek — "Project
+Manager", jedna zdalna bez podanych widełek — "AI Solutions Engineer", jedna
+stacjonarna bez podanych widełek — "Senior DevOps Engineer"; żadna z 6
+zbadanych ofert tej firmy nie miała wypełnionych widełek wynagrodzenia, więc
+gałąź `salary != None` nie jest pokryta realnymi danymi w fixture — pokryta
+tylko przez logikę parsera, analogicznie do ostrzeżenia przy NoFluffJobs).

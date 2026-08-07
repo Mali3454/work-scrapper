@@ -1,0 +1,91 @@
+{
+  "offers": [
+    {
+      "id": 2681423,
+      "guid": "sht1o",
+      "slug": "project-manager-1",
+      "title": "Project Manager",
+      "company_name": "Espeo Software",
+      "city": "Poznań",
+      "country": "Poland",
+      "country_code": "PL",
+      "location": "Poznań, Wielkopolskie, Poland",
+      "remote": false,
+      "on_site": false,
+      "hybrid": true,
+      "status": "published",
+      "careers_url": "https://espeo.recruitee.com/o/project-manager-1",
+      "careers_apply_url": "https://espeo.recruitee.com/o/project-manager-1/c/new",
+      "published_at": "2026-07-17 11:00:39 UTC",
+      "updated_at": "2026-08-05 08:57:20 UTC",
+      "created_at": "2026-07-17 10:48:17 UTC",
+      "salary": {
+        "max": null,
+        "min": null,
+        "period": null,
+        "currency": null
+      },
+      "category_code": "information_technology",
+      "employment_type_code": "contract",
+      "department": "Delivery​"
+    },
+    {
+      "id": 2660726,
+      "guid": "5dbf2",
+      "slug": "ai-solutions-engineer",
+      "title": "AI Solutions Engineer",
+      "company_name": "Espeo Software",
+      "city": "Poznań",
+      "country": "Poland",
+      "country_code": "PL",
+      "location": "Remote job",
+      "remote": true,
+      "on_site": false,
+      "hybrid": true,
+      "status": "published",
+      "careers_url": "https://espeo.recruitee.com/o/ai-solutions-engineer",
+      "careers_apply_url": "https://espeo.recruitee.com/o/ai-solutions-engineer/c/new",
+      "published_at": "2026-06-30 13:04:46 UTC",
+      "updated_at": "2026-08-05 09:38:06 UTC",
+      "created_at": "2026-06-30 11:59:32 UTC",
+      "salary": {
+        "max": null,
+        "min": null,
+        "period": null,
+        "currency": null
+      },
+      "category_code": "engineering",
+      "employment_type_code": "contract",
+      "department": "Delivery​"
+    },
+    {
+      "id": 2441384,
+      "guid": "1autr",
+      "slug": "senior-devops-engineer",
+      "title": "Senior DevOps Engineer",
+      "company_name": "Espeo Software",
+      "city": "Poznań",
+      "country": "Poland",
+      "country_code": "PL",
+      "location": "Poznań, Wielkopolskie, Poland",
+      "remote": false,
+      "on_site": false,
+      "hybrid": true,
+      "status": "published",
+      "careers_url": "https://espeo.recruitee.com/o/senior-devops-engineer",
+      "careers_apply_url": "https://espeo.recruitee.com/o/senior-devops-engineer/c/new",
+      "published_at": "2026-04-14 09:56:04 UTC",
+      "updated_at": "2026-08-05 10:25:18 UTC",
+      "created_at": "2026-01-27 09:45:23 UTC",
+      "salary": {
+        "max": null,
+        "min": null,
+        "period": null,
+        "currency": null
+      },
+      "category_code": "information_technology",
+      "employment_type_code": "freelance",
+      "department": "Delivery​"
+    }
+  ]
+}

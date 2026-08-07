@@ -1,0 +1,77 @@
+# Rejestr firm odpytywanych bezpośrednio (Task 14+).
+#
+# Każdy wpis zweryfikowany na żywo — metoda i wyniki opisane w
+# .superpowers/sdd/2026-08-06-job-scraper/task-14-report.md.
+#
+# ats:
+#   recruitee   — obsługiwany (src/scrapper/sources/ats/recruitee.py)
+#   greenhouse, lever, workable, traffit, smartrecruiters, custom
+#               — ATS zidentyfikowany, ale bez parsera w tym repo jeszcze
+#                 (Task 15 doda greenhouse/lever/workable/traffit).
+#                 `parser: skip` — CompaniesSource pomija wpis z logiem,
+#                 bez awarii.
+
+# Zweryfikowano bezpośrednio: GET https://espeo.recruitee.com/api/offers/
+# → HTTP 200, realne oferty. Espeo Software ma siedzibę w Poznaniu (NIE w
+# Szczecinie) — brak jakiejkolwiek szczecińskiej firmy IT z realnie
+# działającym publicznym endpointem Recruitee wśród sprawdzonych kandydatów
+# (patrz raport). Dołączona jako wymagane minimum zadania: firma z żywym
+# API Recruitee, z której pobrano fixture i którą zweryfikowano na żywo.
+- name: Espeo Software
+  ats: recruitee
+  slug: espeo
+  url: https://espeo.eu/career/
+
+# Szczecin, ul. Zbożowa 4. Zweryfikowano: strona kariery (welcome.home.pl/kariera)
+# linkuje oferty do job-boards.eu.greenhouse.io/homepl/jobs/<id> — Greenhouse
+# potwierdzony bezpośrednim requestem (HTTP 200 na job-boards.eu.greenhouse.io/homepl).
+- name: home.pl
+  ats: greenhouse
+  url: https://welcome.home.pl/kariera
+  parser: skip
+
+# TietoEVRY Poland (dawniej Tieto) ma biuro w Szczecinie (aleja Piastów 30,
+# oferty R&D/telekomunikacja). Zweryfikowano: careers.tieto.com linkuje do
+# smartrecruiters.com/my-applications/Tieto2 — SmartRecruiters, nie jeden z
+# 5 systemów objętych Task 15, więc parser: skip.
+- name: TietoEVRY
+  ats: smartrecruiters
+  url: https://careers.tieto.com/
+  parser: skip
+
+# Spyrosoft Synergy — biuro w Szczecinie (wszczecinie.pl potwierdza otwarcie
+# i rozwój lokalnego zespołu). Strona kariery (spyro-soft.com/career) to
+# WordPress (widoczny marker `api.w.org` w HTML) z niestandardowym,
+# renderowanym po stronie klienta listingiem ofert — brak śladu
+# recruitee/traffit/lever/greenhouse/workable w HTML.
+- name: Spyrosoft
+  ats: custom
+  url: https://spyro-soft.com/careers-site-szczecin
+  parser: skip
+
+# Sii Polska — oddział Szczecin potwierdzony (sii.pl/en/branch/szczecin/,
+# Open Day Szczecin 2025). Centrum specjalizuje się w automotive (C++,
+# AUTOSAR). Strona kariery renderowana po stronie klienta (JS), brak
+# widocznego markera zewnętrznego ATS w statycznym HTML — własny system Sii.
+- name: Sii Polska
+  ats: custom
+  url: https://sii.pl/kariera/oferty-pracy/
+  parser: skip
+
+# Arvato Systems / Arvato Polska — centrum w Szczecinie (szczecinbiznes.pl,
+# liczne oferty na Indeed/Pracuj.pl dla lokalizacji Szczecin). Zweryfikowano:
+# career.arvato.com linkuje do jobsearch.createyourowncareer.com/ARVATO —
+# własna/brandowana platforma Arvato, nie jeden z obsługiwanych systemów.
+- name: Arvato Systems
+  ats: custom
+  url: https://career.arvato.com/
+  parser: skip
+
+# SoftwareMill — polska firma software house, w pełni zdalna (brak
+# potwierdzonego biura w Szczecinie, ale przyjmuje pracowników zdalnie z
+# całej Polski, w tym ze Szczecina). Strona kariery (softwaremill.com/join-us/)
+# hostuje oferty na własnej domenie, bez zewnętrznego ATS.
+- name: SoftwareMill
+  ats: custom
+  url: https://softwaremill.com/join-us/
+  parser: skip
