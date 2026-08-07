@@ -1,0 +1,59 @@
+{
+  "name": "Netguru",
+  "jobs": [
+    {
+      "title": "(Senior) Data Engineer - Freelance",
+      "shortcode": "C99A238797",
+      "telecommuting": true,
+      "published_on": "2026-07-14",
+      "country": "Poland",
+      "city": "",
+      "locations": [
+        {
+          "country": "Poland",
+          "countryCode": "PL",
+          "city": "",
+          "region": null,
+          "hidden": false
+        }
+      ],
+      "url": "https://apply.workable.com/j/C99A238797"
+    },
+    {
+      "title": "(Senior) Fullstack Engineer (Node.js + Python + Typescript) - Freelance",
+      "shortcode": "3796520067",
+      "telecommuting": true,
+      "published_on": "2026-07-16",
+      "country": "Poland",
+      "city": "Poznań",
+      "locations": [
+        {
+          "country": "Poland",
+          "countryCode": "PL",
+          "city": "Poznań",
+          "region": "Greater Poland Voivodeship",
+          "hidden": true
+        }
+      ],
+      "url": "https://apply.workable.com/j/3796520067"
+    },
+    {
+      "title": "Business Development Manager",
+      "shortcode": "9B8C3783A5",
+      "telecommuting": true,
+      "published_on": "2026-07-06",
+      "country": "Poland",
+      "city": "",
+      "locations": [
+        {
+          "country": "Poland",
+          "countryCode": "PL",
+          "city": "",
+          "region": null,
+          "hidden": false
+        }
+      ],
+      "url": "https://apply.workable.com/j/9B8C3783A5"
+    }
+  ]
+}

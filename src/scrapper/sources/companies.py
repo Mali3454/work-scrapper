@@ -6,7 +6,10 @@ import yaml
 from pydantic import BaseModel, ValidationError
 
 from scrapper.models import RawJob
+from scrapper.sources.ats.greenhouse import fetch_greenhouse
+from scrapper.sources.ats.lever import fetch_lever
 from scrapper.sources.ats.recruitee import fetch_recruitee
+from scrapper.sources.ats.workable import fetch_workable
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +63,12 @@ def load_companies(path: Path) -> list[CompanyEntry]:
     return entries
 
 
-DEFAULT_FETCHERS = {"recruitee": fetch_recruitee}
+DEFAULT_FETCHERS = {
+    "recruitee": fetch_recruitee,
+    "greenhouse": fetch_greenhouse,
+    "lever": fetch_lever,
+    "workable": fetch_workable,
+}
 
 
 class CompaniesSource:
@@ -69,8 +77,9 @@ class CompaniesSource:
     Awaria jednej firmy (padnięta strona, timeout, HTTP 5xx) jest logowana
     (`logger.warning`) i pomijana — nie może zabrać ze sobą pozostałych
     firm w rejestrze. Wpisy z `parser: skip` oraz z ATS-em, dla którego nie
-    ma jeszcze fetchera (np. `lever`, `greenhouse`, `workable`, `traffit` —
-    Task 15) są pomijane po cichu z logiem `logger.info`, nie są to awarie.
+    ma jeszcze fetchera (np. `traffit`, `smartrecruiters`, `custom` —
+    Traffit pozostaje nieobsługiwany, patrz docs/sources.md) są pomijane po
+    cichu z logiem `logger.info`, nie są to awarie.
     """
 
     name = "companies"

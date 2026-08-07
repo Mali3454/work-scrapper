@@ -4,10 +4,12 @@
 # .superpowers/sdd/2026-08-06-job-scraper/task-14-report.md.
 #
 # ats:
-#   recruitee   — obsługiwany (src/scrapper/sources/ats/recruitee.py)
-#   greenhouse, lever, workable, traffit, smartrecruiters, custom
-#               — ATS zidentyfikowany, ale bez parsera w tym repo jeszcze
-#                 (Task 15 doda greenhouse/lever/workable/traffit).
+#   recruitee, greenhouse, lever, workable
+#               — obsługiwane (src/scrapper/sources/ats/)
+#   traffit, smartrecruiters, custom
+#               — ATS zidentyfikowany, ale bez parsera w tym repo (Traffit:
+#                 zbadane w Task 15, nie znaleziono zweryfikowanej firmy z
+#                 realnym publicznym API — patrz docs/sources.md).
 #                 `parser: skip` — CompaniesSource pomija wpis z logiem,
 #                 bez awarii.
 
@@ -24,11 +26,15 @@
 
 # Szczecin, ul. Zbożowa 4. Zweryfikowano: strona kariery (welcome.home.pl/kariera)
 # linkuje oferty do job-boards.eu.greenhouse.io/homepl/jobs/<id> — Greenhouse
-# potwierdzony bezpośrednim requestem (HTTP 200 na job-boards.eu.greenhouse.io/homepl).
+# potwierdzony bezpośrednim requestem, i ponownie w Task 15 bezpośrednim
+# GET https://boards-api.greenhouse.io/v1/boards/homepl/jobs -> HTTP 200,
+# 4 oferty. `location.name` zwraca adres z niemieckim egzonimem "Stettin"
+# zamiast "Szczecin" — normalizowane w parserze (patrz
+# src/scrapper/sources/ats/greenhouse.py i docs/sources.md).
 - name: home.pl
   ats: greenhouse
+  slug: homepl
   url: https://welcome.home.pl/kariera
-  parser: skip
 
 # TietoEVRY Poland (dawniej Tieto) ma biuro w Szczecinie (aleja Piastów 30,
 # oferty R&D/telekomunikacja). Zweryfikowano: careers.tieto.com linkuje do

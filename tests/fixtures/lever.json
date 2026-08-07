@@ -1,0 +1,47 @@
+[
+  {
+    "id": "5b5a445a-6150-481b-b4ad-5932d793c2b3",
+    "text": "Data Protection Officer",
+    "workplaceType": "hybrid",
+    "categories": {
+      "location": "Portugal, Lisbon",
+      "allLocations": [
+        "Portugal, Lisbon"
+      ],
+      "team": "Legal",
+      "commitment": "Full Time"
+    },
+    "createdAt": 1784736705020,
+    "hostedUrl": "https://jobs.lever.co/pipedrive/5b5a445a-6150-481b-b4ad-5932d793c2b3"
+  },
+  {
+    "id": "8adfa26a-70cd-412b-8d7b-ccab306b1ec0",
+    "text": "Data Protection Officer",
+    "workplaceType": "hybrid",
+    "categories": {
+      "location": "UK, London",
+      "allLocations": [
+        "UK, London"
+      ],
+      "team": "Legal",
+      "commitment": "Full Time"
+    },
+    "createdAt": 1784736183956,
+    "hostedUrl": "https://jobs.lever.co/pipedrive/8adfa26a-70cd-412b-8d7b-ccab306b1ec0"
+  },
+  {
+    "id": "27906eb6-51df-4dbc-a860-72e911bdd2c8",
+    "text": "Principal AI/ML Scientist & Engineer",
+    "workplaceType": "hybrid",
+    "categories": {
+      "location": "Portugal, Lisbon",
+      "allLocations": [
+        "Portugal, Lisbon"
+      ],
+      "team": "ML & Data Science",
+      "commitment": "Full Time"
+    },
+    "createdAt": 1776323831956,
+    "hostedUrl": "https://jobs.lever.co/pipedrive/27906eb6-51df-4dbc-a860-72e911bdd2c8"
+  }
+]

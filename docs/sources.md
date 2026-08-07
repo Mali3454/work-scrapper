@@ -530,3 +530,322 @@ stacjonarna bez podanych widełek — "Senior DevOps Engineer"; żadna z 6
 zbadanych ofert tej firmy nie miała wypełnionych widełek wynagrodzenia, więc
 gałąź `salary != None` nie jest pokryta realnymi danymi w fixture — pokryta
 tylko przez logikę parsera, analogicznie do ostrzeżenia przy NoFluffJobs).
+
+## Greenhouse
+
+### Endpoint
+
+```
+GET https://boards-api.greenhouse.io/v1/boards/<slug>/jobs
+```
+
+Publiczny, nieautoryzowany endpoint per firma (`<slug>` to identyfikator
+firmy w Greenhouse). Zweryfikowano bezpośrednio: `GET
+https://boards-api.greenhouse.io/v1/boards/homepl/jobs` → HTTP 200, 4
+oferty (home.pl S.A., jedyna szczecińska firma w projekcie z żywym ATS-em —
+patrz `companies.yaml` i `task-15-brief.md`).
+
+### Data weryfikacji
+
+2026-08-07 (firma testowa: home.pl, slug `homepl`)
+
+### Kształt odpowiedzi (korzeń)
+
+```json
+{ "jobs": [ /* lista obiektów oferty, patrz niżej */ ] }
+```
+
+Brak paginacji w zbadanej próbce — 4 oferty home.pl zwrócone w jednym
+żądaniu, bez parametru strony/limitu w odpowiedzi.
+
+### Struktura pojedynczej oferty (pola istotne)
+
+```
+id                — liczbowy identyfikator oferty
+title             — tytuł stanowiska
+absolute_url      — pełny URL strony oferty — GOTOWY, nie trzeba budować
+location.name     — string opisowy lokalizacji — **UWAGA: bywa PEŁNYM
+                    ADRESEM, nie samą nazwą miasta** ("ul. Zbożowa 4,
+                    70-653 Stettin" dla wszystkich 4 ofert home.pl), z
+                    miastem w ostatnim segmencie po przecinku, poprzedzonym
+                    kodem pocztowym
+updated_at        — ISO 8601 z offsetem (nie "Z") — **UWAGA: NIEUŻYTECZNE
+                    jako data publikacji**, patrz niżej
+first_published   — ISO 8601 z offsetem — prawdziwa data publikacji oferty
+```
+
+**Pułapka nr 1 — egzonim miasta.** `location.name` dla home.pl zwraca
+`"ul. Zbożowa 4, 70-653 Stettin"` — Greenhouse (albo dane wprowadzone przez
+firmę) używa niemieckiego egzonimu `Stettin` zamiast polskiego `Szczecin`.
+`matcher._location_ok` dopasowuje przez `casefold()`+substring
+(`"szczecin" in city`) — bez normalizacji ta oferta (i każda inna
+z tego boarda) NIGDY nie przejdzie filtra lokalizacji dla profilu
+`locations: [szczecin]`, mimo że fizycznie jest w Szczecinie. Parser
+(`_extract_city` w `greenhouse.py`) wyciąga miasto z adresu i mapuje
+znane egzonimy na polskie nazwy. **Potwierdzone realnymi danymi: tylko
+`Stettin` → `Szczecin`** (home.pl). Mapa zawiera dodatkowo `Warschau`,
+`Krakau`, `Danzig`, `Breslau`, `Posen` jako zabezpieczenie defensywne —
+Greenhouse jest używany też przez firmy niemieckojęzyczne, więc ryzyko
+tego samego wzorca dla innych miast jest realne, ale **te pozycje NIE są
+zweryfikowane na żadnych realnych danych w tym projekcie**.
+
+**Pułapka nr 2 — `updated_at` nie jest datą publikacji.** Wszystkie 4
+oferty home.pl mają IDENTYCZNE `updated_at`
+(`2026-08-04T06:16:30-04:00`) — to zbiorcze odświeżenie tablicy ofert
+(np. przez integrację/re-indeksację), nie moment publikacji konkretnej
+oferty. Realne daty publikacji (`first_published`) rozrzucają się od
+`2025-09-10` do `2026-07-06`. Parser bierze `first_published`, z fallbackiem
+na `updated_at` tylko gdy pierwsze pole brakuje — odwrotna kolejność
+zepsułaby `max_age_days` (11-miesięczna oferta wyglądałaby jak
+opublikowana 3 dni temu).
+
+Offset dat to `-04:00` (nie `Z`) — `datetime.fromisoformat` (Python 3.11+)
+obsługuje to wprost, bez potrzeby zamiany sufiksów.
+
+### Mapowanie pól → `RawJob`
+
+| Pole w API | Pole w RawJob | Uwagi |
+| --- | --- | --- |
+| `id` | `external_id` | `str(id)`; fallback na `absolute_url`, gdyby brakowało |
+| `title` | `title` | bez zmian |
+| — (parametr `company`) | `company` | z rejestru `companies.yaml`, jak w Recruitee |
+| `location.name` (wyciągnięte + znormalizowane) | `city` | patrz Pułapka nr 1 wyżej |
+| — (stała) | `remote` | `False` — w zbadanej próbce (home.pl) brak jakiegokolwiek pola/wskaźnika pracy zdalnej; nie badano innych boardów Greenhouse |
+| `absolute_url` | `url` | gotowy URL, nie trzeba budować |
+| — (stała) | `salary` | `None` — brak pola wynagrodzenia w zbadanej próbce |
+| `first_published` (fallback `updated_at`) | `posted_at` | patrz Pułapka nr 2 wyżej |
+
+### Pola, których NIE MA / nie są używane
+
+- Brak pola wynagrodzenia w zbadanej próbce (4 oferty home.pl) —
+  `salary` zawsze `None`.
+- Brak wprost dostępnego pola boolowskiego "remote" — nie badano, czy
+  istnieje na innych boardach Greenhouse; w tym repo nieużywane.
+
+Fixture: `tests/fixtures/greenhouse.json` (przycięty do 2 z 4 ofert home.pl,
+obie z adresem `"ul. Zbożowa 4, 70-653 Stettin"` — celowo zachowane, to
+sedno testu regresyjnego na normalizację miasta; różne `first_published`
+mimo identycznego `updated_at`, żeby pokryć Pułapkę nr 2).
+
+## Lever
+
+### Endpoint
+
+```
+GET https://api.lever.co/v0/postings/<slug>?mode=json
+```
+
+Publiczny, nieautoryzowany endpoint per firma. Zweryfikowano bezpośrednio:
+`GET https://api.lever.co/v0/postings/pipedrive?mode=json` → HTTP 200, 16
+ofert. Kandydaci sprawdzeni i ODRZUCENI (HTTP 404): netguru, brainly,
+docplanner, figma, shopify, revolut, bolt, glovo, typeform, zalando, n26,
+wise — te firmy nie używają Lever pod tymi slugami. `plaid`, `lever`,
+`mistral` zwracają HTTP 200, ale z pustą listą — bezużyteczne jako fixture.
+
+**Uwaga:** Pipedrive nie ma potwierdzonej obecności w Szczecinie — służy w
+tym projekcie wyłącznie jako źródło zweryfikowanego, żywego fixture'a dla
+parsera Lever (patrz `companies.yaml`, nie dodano jako wpis rejestru firm).
+
+### Data weryfikacji
+
+2026-08-07 (firma testowa: Pipedrive, slug `pipedrive`)
+
+### Kształt odpowiedzi (korzeń)
+
+Odpowiedź to **LISTA obiektów oferty wprost**, NIE obiekt z kluczem
+(w przeciwieństwie do Recruitee/Greenhouse, gdzie lista jest zagnieżdżona):
+
+```json
+[ /* obiekty ofert */ ]
+```
+
+### Struktura pojedynczej oferty (pola istotne)
+
+```
+id                     — string (UUID), identyfikator oferty
+text                   — tytuł stanowiska
+hostedUrl              — pełny URL strony oferty — GOTOWY
+workplaceType          — "hybrid" | "remote" | "on-site" — pole boolowskie
+                          zastąpione stringiem enum; w CAŁEJ zbadanej
+                          próbce (16 ofert Pipedrive) wartość to zawsze
+                          "hybrid" — warianty "remote"/"on-site" NIE są
+                          pokryte fixture'em, tylko testem syntetycznym
+categories.location     — string **"Kraj, Miasto"** (np. "Portugal, Lisbon",
+                          "UK, London") — miasto jest NA KOŃCU, nie na
+                          początku
+categories.allLocations — lista stringów w tym samym formacie — oferta
+                          bywa przypisana do kilku lokalizacji naraz
+createdAt               — epoch millisecond timestamp (int)
+```
+
+**Pułapka — kolejność w `categories.location`.** Format to `"Kraj,
+Miasto"`, nie `"Miasto, Kraj"` — wzięcie pierwszego segmentu dałoby nazwę
+kraju jako `city`. Parser bierze OSTATNI segment po przecinku.
+
+**Decyzja o `categories.allLocations`:** jedna oferta Lever może mieć kilka
+lokalizacji (np. ta sama rola otwarta w Lizbonie, Londynie, Dublinie i
+Tallinie — obserwowane na żywo dla "Data Protection Officer" i "Principal
+AI/ML Scientist & Engineer", każda jako OSOBNA oferta z własnym `id` w tej
+samej odpowiedzi, a nie jako jedna oferta z wieloma lokalizacjami w
+`allLocations`). Parser Task 15 świadomie NIE rozbija pojedynczej oferty na
+wiele `RawJob` per lokalizacja z `allLocations` — bierze tylko
+`categories.location` (główną/pierwszą). Uzasadnienie: w zbadanej próbce
+każdy wpis `allLocations` miał dokładnie jeden element pokrywający się z
+`categories.location`, więc rozbicie nie miałoby efektu na tych danych;
+gdyby `allLocations` miało więcej elementów niż jeden, rozbijanie na wiele
+`RawJob` z tym samym `external_id` i różnym `city` skomplikowałoby
+deduplikację (`deduper.py` klucz zawiera `external_id`) bez wyraźnej
+korzyści dla tego projektu (interesuje nas wyłącznie obecność oferty w
+Szczecinie, nie pełna lista miast).
+
+**`workplaceType` zamiast heurystyki:** pole boolowskie/enumowe jest
+używane wprost (analogicznie do `remote` w Recruitee i `workplaceType` w
+JustJoinIT), zamiast wyszukiwania słowa "remote" w tekście lokalizacji.
+Heurystyka po tekście jest fallbackiem tylko, gdy `workplaceType` brakuje
+— nie zaobserwowano takiego przypadku w próbce.
+
+### Mapowanie pól → `RawJob`
+
+| Pole w API | Pole w RawJob | Uwagi |
+| --- | --- | --- |
+| `id` | `external_id` | string (UUID) |
+| `text` | `title` | bez zmian |
+| — (parametr `company`) | `company` | z rejestru `companies.yaml` |
+| `categories.location` (ostatni segment po przecinku) | `city` | patrz pułapka wyżej |
+| `workplaceType == "remote"` | `remote` | fallback: słowo "remote" w `text`/`categories.location`, gdy pole brakuje |
+| `hostedUrl` (fallback `applyUrl`) | `url` | gotowy URL |
+| — (stała) | `salary` | `None` — brak pola wynagrodzenia w zbadanej próbce |
+| `createdAt` (epoch ms) | `posted_at` | `datetime.fromtimestamp(value / 1000, tz=timezone.utc)` |
+
+### Pola, których NIE MA / nie są używane
+
+- Brak pola wynagrodzenia w zbadanej próbce.
+- `categories.allLocations` — obecne, ale świadomie nieużywane (patrz
+  decyzja wyżej).
+- Warianty `workplaceType` inne niż `"hybrid"` (`"remote"`, `"on-site"`) —
+  logika je obsługuje, ale nie są pokryte fixture'em z realnych danych,
+  tylko testem syntetycznym (`tests/test_ats_parsers.py`).
+
+Fixture: `tests/fixtures/lever.json` (przycięty do 3 z 16 ofert Pipedrive:
+dwie oferty "Data Protection Officer" w różnych krajach — "Portugal,
+Lisbon" i "UK, London" — pokazujące parsowanie kolejności "Kraj, Miasto",
+jedna "Principal AI/ML Scientist & Engineer" w "Portugal, Lisbon" dla
+zróżnicowania tytułów; wszystkie trzy mają `workplaceType: "hybrid"`, bo to
+jedyna wartość zaobserwowana w całej próbce 16 ofert).
+
+## Workable
+
+### Endpoint
+
+```
+GET https://apply.workable.com/api/v1/widget/accounts/<slug>?details=true
+```
+
+Publiczny, nieautoryzowany endpoint per firma (widget karier). Zweryfikowano
+bezpośrednio: `netguru` (28 ofert) i `monterail` (24 oferty), oba HTTP 200.
+
+**Uwaga:** ani Netguru, ani Monterail nie mają potwierdzonej obecności w
+Szczecinie — służą w tym projekcie wyłącznie jako źródło zweryfikowanego,
+żywego fixture'a dla parsera Workable (patrz `companies.yaml`, nie dodano
+jako wpisy rejestru firm).
+
+### Data weryfikacji
+
+2026-08-07 (firmy testowe: Netguru slug `netguru`, Monterail slug
+`monterail`)
+
+### Kształt odpowiedzi (korzeń)
+
+```json
+{
+  "name": "Netguru",
+  "description": "...",
+  "jobs": [ /* lista obiektów oferty, patrz niżej */ ]
+}
+```
+
+### Struktura pojedynczej oferty (pola istotne)
+
+```
+shortcode        — string, identyfikator oferty — **UWAGA: pole `id` NIE
+                    ISTNIEJE w tym API**, `shortcode` jest jedynym
+                    identyfikatorem
+title            — tytuł stanowiska
+url              — pełny URL strony oferty — GOTOWY
+telecommuting    — bool, prawdziwe pole zwracane przez API
+published_on     — data BEZ godziny/strefy, np. "2026-07-14"
+city             — string — **UWAGA: bywa PUSTYM STRINGIEM `""`, nie
+                    `null`**, gdy oferta nie ma podanej konkretnej
+                    lokalizacji (zaobserwowane na ofertach freelance/zdalnych
+                    Netguru); bywa też wypełniony (np. "Poznań" dla oferty
+                    stacjonarnej Netguru, "Wrocław"/"Kraków"/"Warszawa" dla
+                    ofert Monterail)
+locations[]      — lista obiektów `{country, countryCode, city, region,
+                    hidden}` — obok pojedynczego `city`; dla ofert Monterail
+                    z kilkoma lokalizacjami zaobserwowano JEDEN wpis
+                    `jobs[]` PER lokalizacja (ten sam `shortcode` powtórzony
+                    kilka razy z różnym `city`/`locations`), nie jedną
+                    ofertę z listą — nie badano szczegółowo, poza zakresem
+                    Task 15 (parser bierze pole `city` z poziomu oferty, nie
+                    `locations[]`)
+```
+
+**Pułapka — pusty string zamiast `null`.** `entry.get("city")` bez `or
+None` wsadziłoby `""` do `RawJob.city` — klucz deduplikacji dostałby pusty
+segment zamiast braku segmentu, co mogłoby rozjechać dedup względem innych
+źródeł tej samej oferty. Parser robi `offer.get("city") or None`.
+
+**`id` nie istnieje.** W przeciwieństwie do Recruitee/Greenhouse (gdzie
+`id` jest liczbą), Workable w tym endpoincie w ogóle nie zwraca pola `id`
+— identyfikatorem jest `shortcode` (string alfanumeryczny).
+
+### Mapowanie pól → `RawJob`
+
+| Pole w API | Pole w RawJob | Uwagi |
+| --- | --- | --- |
+| `shortcode` | `external_id` | fallback na `url`, gdyby brakowało |
+| `title` | `title` | bez zmian |
+| — (parametr `company`) | `company` | z rejestru `companies.yaml` |
+| `city` | `city` | `offer.get("city") or None` — patrz pułapka wyżej |
+| `telecommuting` | `remote` | wprost z API, bool |
+| `url` (fallback `shortlink`) | `url` | gotowy URL |
+| — (stała) | `salary` | `None` — brak pola wynagrodzenia w zbadanej próbce |
+| `published_on` | `posted_at` | sama data, bez strefy — `datetime.fromisoformat` zwraca naive datetime, znormalizowane do UTC przez `RawJob.normalize_posted_at` (`models.py`) |
+
+### Pola, których NIE MA / nie są używane
+
+- Brak pola `id` — używany `shortcode`.
+- Brak pola wynagrodzenia w zbadanej próbce (52 oferty łącznie z obu firm).
+- `locations[]` — obecne obok `city`, nieużywane (parser bierze `city`
+  z poziomu oferty).
+
+Fixture: `tests/fixtures/workable.json` (przycięty do 3 z 28 ofert Netguru:
+dwie z pustym `city` — "(Senior) Data Engineer - Freelance" i "Business
+Development Manager" — pokrywające pułapkę pustego stringa, jedna z
+wypełnionym `city: "Poznań"` — "(Senior) Fullstack Engineer" — pokrywająca
+gałąź normalnego miasta).
+
+## Traffit
+
+**Status: niewspierany w tym repo — brak parsera.**
+
+Zbadano w Task 15 zgodnie z zakresem (wymagane minimum: research, nie
+implementacja za wszelką cenę). Traffit to polski system ATS (traffit.com),
+potwierdzony jako istniejący produkt (m.in. wzmianki o klientach w
+materiałach branżowych — Calamari.pl, HRstandard.pl), ale **nie znaleziono
+w dostępnym czasie żadnej zweryfikowanej polskiej firmy IT z realnie
+działającym, publicznie dostępnym endpointem API Traffit** (analogicznym do
+`<slug>.recruitee.com/api/offers/` czy `boards-api.greenhouse.io/v1/boards/<slug>/jobs`)
+do użycia jako fixture. Próby oczywistych wzorców URL
+(`<slug>.traffit.com/careers`, `api.traffit.com/careers/<slug>/offers`)
+zwróciły odpowiednio HTTP 503 i HTTP 404 dla jedynego zidentyfikowanego
+kandydata (HRosi) — nie potwierdzają istnienia publicznego API pod tym
+wzorcem.
+
+Zgodnie z `task-15-brief.md`: brak zweryfikowanego, żywego przykładu
+Traffit jest akceptowalnym wynikiem tego zadania, NIE porażką — nie dodano
+Playwrighta ani innego renderowania JS, żeby to obejść. Żadna firma w
+`companies.yaml` nie ma `ats: traffit` z realnym slugiem — gdyby taka
+firma została znaleziona w przyszłości, `CompaniesSource` pominie ją po
+cichu (`parser: skip` lub brak fetchera dla `traffit` w `DEFAULT_FETCHERS`)
+bez awarii reszty rejestru.
