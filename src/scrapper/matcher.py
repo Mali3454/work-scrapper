@@ -28,10 +28,24 @@ def _age_ok(job: RawJob, profile: Profile, now: datetime) -> bool:
     return job.posted_at >= now - timedelta(days=profile.max_age_days)
 
 
+def _keyword_haystack(job: RawJob) -> str:
+    """Tytuł + wymagane umiejętności — tam szukamy słów kluczowych.
+
+    Sama nazwa narzędzia bywa wyłącznie w `skills`: oferta „Asystent/ka
+    Projektanta Konstrukcji" (RocketJobs) ma „Tekla” tylko tam. Szukanie po
+    samym tytule gubiłoby takie oferty.
+    """
+    return " ".join([job.title, *job.skills])
+
+
 def matches(job: RawJob, profile: Profile, now: datetime) -> bool:
+    # `exclude` celowo patrzy TYLKO na tytuł. Gdyby obejmowało umiejętności,
+    # `exclude: [senior]` odrzucałoby ofertę juniorską wymagającą współpracy
+    # z seniorem, a wykluczenia mają dotyczyć poziomu stanowiska, nie techniki.
     if any(_contains_word(job.title, word) for word in profile.exclude):
         return False
-    if not any(_contains_word(job.title, word) for word in profile.keywords):
+    haystack = _keyword_haystack(job)
+    if not any(_contains_word(haystack, word) for word in profile.keywords):
         return False
     if not _location_ok(job, profile):
         return False

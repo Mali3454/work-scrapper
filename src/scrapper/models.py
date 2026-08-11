@@ -15,6 +15,12 @@ class RawJob(BaseModel):
     url: str
     salary: str | None = None
     posted_at: datetime | None = None
+    # Wymagane technologie/umiejętności, gdy źródło je podaje. Powód: nazwa
+    # narzędzia bywa WYŁĄCZNIE tutaj, nigdy w tytule. Zweryfikowane na żywo —
+    # jedyna oferta z Teklą na RocketJobs ma tytuł "Asystent/ka Projektanta
+    # Konstrukcji", a "Tekla" siedzi w requiredSkills. Szukanie po samym tytule
+    # gubiłoby ją bezpowrotnie.
+    skills: list[str] = Field(default_factory=list)
 
     @field_validator("posted_at", mode="before")
     @classmethod

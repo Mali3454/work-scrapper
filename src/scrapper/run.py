@@ -14,6 +14,7 @@ from scrapper.sources.base import AllSourcesFailed, Source, build_client, collec
 from scrapper.sources.companies import CompaniesSource, load_companies
 from scrapper.sources.justjoinit import JustJoinIt
 from scrapper.sources.nofluffjobs import NoFluffJobs
+from scrapper.sources.rocketjobs import RocketJobs
 from scrapper.store import append, load_seen, select_new
 
 logger = logging.getLogger(__name__)
@@ -135,6 +136,9 @@ def main() -> None:
             JustJoinIt(cities=cities, include_nationwide=nationwide),
             NoFluffJobs(cities=cities, include_nationwide=nationwide,
                         categories=nfj_categories),
+            # Portal spoza IT — jedyne źródło z ofertami inżynieryjno-budowlanymi
+            # (Tekla, projektanci konstrukcji). Patrz sources/rocketjobs.py.
+            RocketJobs(cities=cities, include_nationwide=nationwide),
             CompaniesSource(load_companies(COMPANIES_PATH)),
         ]
         count = run(config, sources, STORE_PATH, client, datetime.now(timezone.utc))

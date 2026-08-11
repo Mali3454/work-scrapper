@@ -925,3 +925,67 @@ Playwrighta ani innego renderowania JS, żeby to obejść. Żadna firma w
 firma została znaleziona w przyszłości, `CompaniesSource` pominie ją po
 cichu (`parser: skip` lub brak fetchera dla `traffit` w `DEFAULT_FETCHERS`)
 bez awarii reszty rejestru.
+
+## RocketJobs.pl
+
+### Endpoint
+
+```
+GET https://rocketjobs.pl/api/candidate-api/offers
+```
+
+### Po co to źródło
+
+JustJoinIT i NoFluffJobs to portale **wyłącznie IT**. Oferty
+inżynieryjno-budowlane na nich nie występują — sprawdzone na żywo 2026-08-07:
+**0 trafień** na „tekla" w 4000 ofert JustJoinIT i w 6000 ofert NoFluffJobs.
+
+RocketJobs.pl prowadzi ten sam operator co justjoin.it, ale zbiera oferty
+**spoza IT** (PKP, Medicover, produkcja, budownictwo, sprzedaż). To jedyne
+źródło w tym projekcie, które dowozi oferty z Tekla Structures.
+
+### Dlaczego kod jest dziedziczony, a nie skopiowany
+
+Struktura odpowiedzi jest **identyczna** z JustJoinIT: `data[]` +
+`meta.next.cursor`, te same nazwy pól (`guid`, `slug`, `city`,
+`workplaceType`, `publishedAt`, `employmentTypes`, `requiredSkills`), ta sama
+paginacja przez `from` i ten sam limit okna wyników. `RocketJobs` dziedziczy
+po `JustJoinIt` i podmienia trzy stałe. Kopia parsera dublowałaby także
+wszystkie pułapki, które kosztowały osobne rundy poprawek (reguła wyboru
+widełek, `from` zamiast `cursor`, HTTP 500 przy przekroczeniu okna).
+
+### Data weryfikacji
+
+2026-08-07:
+- `GET /api/candidate-api/offers` → HTTP 200
+- filtr `city=szczecin` → `totalItems: 441`
+- `https://rocketjobs.pl/oferta-pracy/<slug>` → HTTP 200, a slug **zmyślony**
+  → HTTP 404. Sprawdzenie negatywne jest tu istotne: `/job-offer/<slug>` i
+  `/offers/<slug>` też zwracają 200 dla prawdziwego sluga, więc bez próby z
+  fałszywym slugiem nie dałoby się stwierdzić, który adres jest kanoniczny.
+
+### Umiejętności — `requiredSkills` / `niceToHaveSkills`
+
+**To lista OBIEKTÓW `{"name": ..., "level": ...}`, nie stringów.** Sklejanie
+ich jak stringów kończy się `TypeError` (potknąłem się o to przy pierwszym
+przeszukiwaniu puli).
+
+Pole trafia do `RawJob.skills` i jest przeszukiwane przez matcher **razem z
+tytułem**, bo nazwa narzędzia bywa wyłącznie tam:
+
+```
+title:  "Asystent/ka Projektanta Konstrukcji (konstrukcje żelbetowe i stalowe)"
+skills: ["Allplan", "język angielski", "tekla"]
+```
+
+Szukanie po samym tytule gubiłoby tę ofertę bezpowrotnie — a jest to jedyna
+oferta z Teklą znaleziona na wszystkich portalach razem wziętych.
+
+`exclude` celowo patrzy **tylko na tytuł**: gdyby obejmowało umiejętności,
+`exclude: [senior]` odrzucałoby ofertę juniorską wymagającą współpracy z
+seniorem, a wykluczenia mają dotyczyć poziomu stanowiska, nie techniki.
+
+Fixture: `tests/fixtures/rocketjobs.json` (3 realne oferty, przycięte
+kolumnowo do pól używanych przez parser: jedna z „tekla" w `requiredSkills`
+i tytułem bez tego słowa — sedno testu regresyjnego, jedna zdalna, jedna
+stacjonarna).

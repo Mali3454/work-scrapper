@@ -64,7 +64,31 @@ def _salary(entry: dict) -> str | None:
     return f"{_fmt(low)}-{_fmt(high)} {currency}{unit_label}{type_label}".strip()
 
 
-def parse(payload: dict | list) -> list[RawJob]:
+def _skills(entry: dict) -> list[str]:
+    """Nazwy z `requiredSkills`/`niceToHaveSkills`.
+
+    Format to lista OBIEKTÓW `{"name": ..., "level": ...}`, nie stringów —
+    potraktowanie ich jak stringi daje `TypeError` przy sklejaniu. Nazwa
+    narzędzia bywa tylko tutaj i nigdy w tytule (patrz `RawJob.skills`).
+    """
+    names = []
+    for key in ("requiredSkills", "niceToHaveSkills"):
+        for skill in entry.get(key) or []:
+            name = skill.get("name") if isinstance(skill, dict) else skill
+            if name:
+                names.append(str(name))
+    return names
+
+
+def parse(payload: dict | list, source: str = "justjoinit",
+          offer_url: str = OFFER_URL) -> list[RawJob]:
+    """Mapuje odpowiedź API rodziny justjoin.it na `RawJob`.
+
+    `source`/`offer_url` są parametrami, bo RocketJobs.pl (ten sam operator)
+    wystawia BAJT W BAJT tę samą strukturę odpowiedzi — różni się wyłącznie
+    hostem i ścieżką oferty. Kopiowanie parsera byłoby dublowaniem także
+    wszystkich pułapek (widełki, paginacja `from`, limit okna).
+    """
     entries = (payload.get("data") or []) if isinstance(payload, dict) else payload
     jobs = []
     for entry in entries:
@@ -74,15 +98,16 @@ def parse(payload: dict | list) -> list[RawJob]:
             continue
         jobs.append(
             RawJob(
-                source="justjoinit",
+                source=source,
                 external_id=guid,
                 title=entry.get("title", ""),
                 company=entry.get("companyName", ""),
                 city=entry.get("city"),
                 remote=(entry.get("workplaceType") or "").casefold() == "remote",
-                url=OFFER_URL.format(slug=slug),
+                url=offer_url.format(slug=slug),
                 salary=_salary(entry),
                 posted_at=_parse_datetime(entry.get("publishedAt")),
+                skills=_skills(entry),
             )
         )
     return jobs
@@ -92,7 +117,8 @@ _PAGE_SIZE = 100
 
 
 def _fetch_entries_for_city(
-    client: httpx.Client, city: str | None, max_offers: int, page_size: int | None = None
+    client: httpx.Client, city: str | None, max_offers: int, page_size: int | None = None,
+    api_url: str = API_URL,
 ) -> list[dict]:
     """Pobiera surowe wpisy `data[]` dla jednego zapytania (miasto albo brak filtra).
 
@@ -133,7 +159,7 @@ def _fetch_entries_for_city(
             params["city"] = city
 
         try:
-            response = client.get(API_URL, params=params)
+            response = client.get(api_url, params=params)
             response.raise_for_status()
         except httpx.HTTPStatusError as exc:
             if from_ is None:
@@ -184,7 +210,13 @@ def _fetch_entries_for_city(
 
 
 class JustJoinIt:
+    """Źródło justjoin.it. Klasa bazowa także dla RocketJobs.pl — ten sam
+    operator wystawia identyczne API, więc podklasa podmienia tylko trzy stałe
+    (patrz `sources/rocketjobs.py`)."""
+
     name = "justjoinit"
+    api_url = API_URL
+    offer_url = OFFER_URL
 
     def __init__(self, max_offers: int = 2000, cities: list[str] | None = None,
                  include_nationwide: bool = False):
@@ -201,13 +233,14 @@ class JustJoinIt:
             remaining_budget = self.max_offers - len(merged_entries)
             if remaining_budget <= 0:
                 logger.warning(
-                    "justjoinit: max_offers=%d wyczerpany po %d/%d miastach — "
+                    "%s: max_offers=%d wyczerpany po %d/%d miastach — "
                     "pomijam pozostałe (%s); rozważ podniesienie limitu",
-                    self.max_offers, index, len(queries), queries[index:],
+                    self.name, self.max_offers, index, len(queries), queries[index:],
                 )
                 break
 
-            for entry in _fetch_entries_for_city(client, city, remaining_budget):
+            for entry in _fetch_entries_for_city(client, city, remaining_budget,
+                                                 api_url=self.api_url):
                 guid = entry.get("guid")
                 if guid:
                     if guid in seen_guids:
@@ -215,4 +248,4 @@ class JustJoinIt:
                     seen_guids.add(guid)
                 merged_entries.append(entry)
 
-        return parse({"data": merged_entries})
+        return parse({"data": merged_entries}, source=self.name, offer_url=self.offer_url)

@@ -1,0 +1,338 @@
+{
+ "data": [
+  {
+   "guid": "19c58f45-b327-41c8-8dbc-e5e421fe799f",
+   "slug": "roeslein-associates-projektant-konstrukcji-stalowych-structural-designer-konstruktor-cad-krakow-inzynieria-projektowanie",
+   "title": "Projektant Konstrukcji Stalowych / Structural Designer / Konstruktor CAD",
+   "workplaceType": "office",
+   "city": "Kraków",
+   "companyName": "Roeslein & Associates",
+   "publishedAt": "2026-08-11T16:00:10.8629011Z",
+   "employmentTypes": [
+    {
+     "from": null,
+     "fromPerUnit": null,
+     "to": null,
+     "toPerUnit": null,
+     "currency": "GBP",
+     "currencySource": "conversion",
+     "type": "permanent",
+     "unit": "month",
+     "gross": true
+    },
+    {
+     "from": null,
+     "fromPerUnit": null,
+     "to": null,
+     "toPerUnit": null,
+     "currency": "CHF",
+     "currencySource": "conversion",
+     "type": "permanent",
+     "unit": "month",
+     "gross": true
+    },
+    {
+     "from": null,
+     "fromPerUnit": null,
+     "to": null,
+     "toPerUnit": null,
+     "currency": "USD",
+     "currencySource": "conversion",
+     "type": "permanent",
+     "unit": "month",
+     "gross": true
+    },
+    {
+     "from": null,
+     "fromPerUnit": null,
+     "to": null,
+     "toPerUnit": null,
+     "currency": "EUR",
+     "currencySource": "conversion",
+     "type": "permanent",
+     "unit": "month",
+     "gross": true
+    },
+    {
+     "from": null,
+     "fromPerUnit": null,
+     "to": null,
+     "toPerUnit": null,
+     "currency": "PLN",
+     "currencySource": "original",
+     "type": "permanent",
+     "unit": "month",
+     "gross": true
+    }
+   ],
+   "requiredSkills": [
+    {
+     "name": "AutoCAD",
+     "level": 1
+    },
+    {
+     "name": "3D",
+     "level": 1
+    },
+    {
+     "name": "CAD",
+     "level": 1
+    },
+    {
+     "name": "mechanika",
+     "level": 1
+    },
+    {
+     "name": "projektowanie",
+     "level": 1
+    },
+    {
+     "name": "konstrukcje stalowe",
+     "level": 1
+    },
+    {
+     "name": "ADVANCE STEEL",
+     "level": 1
+    },
+    {
+     "name": "tekla",
+     "level": 1
+    }
+   ],
+   "niceToHaveSkills": []
+  },
+  {
+   "guid": "d5cb39d2-329c-401d-9370-1a57e570bf61",
+   "slug": "ovb-allfinanz-polska-sp-z-o-o--specjalista-specjalistka-ds-planowania-finansowego-m-k-os--olsztyn-sales-finanse-bankowosc-ubezpieczenia",
+   "title": "Specjalista / Specjalistka ds. Planowania Finansowego (m/k/os.)",
+   "workplaceType": "remote",
+   "city": "Olsztyn",
+   "companyName": "OVB Allfinanz Polska sp. z o.o.",
+   "publishedAt": "2026-08-11T17:00:23.5289431Z",
+   "employmentTypes": [
+    {
+     "from": 9000.0,
+     "fromPerUnit": 9000.0,
+     "to": 13000.0,
+     "toPerUnit": 13000.0,
+     "currency": "PLN",
+     "currencySource": "original",
+     "type": "b2b",
+     "unit": "Month",
+     "gross": false
+    },
+    {
+     "from": 9000.0,
+     "fromPerUnit": 9000.0,
+     "to": 13000.0,
+     "toPerUnit": 13000.0,
+     "currency": "PLN",
+     "currencySource": "original",
+     "type": "mandate_contract",
+     "unit": "Month",
+     "gross": true
+    },
+    {
+     "from": 2412.0,
+     "fromPerUnit": 2411.575562700963,
+     "to": 3483.0,
+     "toPerUnit": 3483.386923901391,
+     "currency": "USD",
+     "currencySource": "conversion",
+     "type": "mandate_contract",
+     "unit": "Month",
+     "gross": true
+    },
+    {
+     "from": 2412.0,
+     "fromPerUnit": 2411.575562700963,
+     "to": 3483.0,
+     "toPerUnit": 3483.386923901391,
+     "currency": "USD",
+     "currencySource": "conversion",
+     "type": "b2b",
+     "unit": "Month",
+     "gross": false
+    },
+    {
+     "from": 2091.0,
+     "fromPerUnit": 2090.592334494774,
+     "to": 3020.0,
+     "toPerUnit": 3019.744483159118,
+     "currency": "EUR",
+     "currencySource": "conversion",
+     "type": "mandate_contract",
+     "unit": "Month",
+     "gross": true
+    },
+    {
+     "from": 2091.0,
+     "fromPerUnit": 2090.592334494774,
+     "to": 3020.0,
+     "toPerUnit": 3019.744483159118,
+     "currency": "EUR",
+     "currencySource": "conversion",
+     "type": "b2b",
+     "unit": "Month",
+     "gross": false
+    },
+    {
+     "from": 1953.0,
+     "fromPerUnit": 1953.125000000001,
+     "to": 2821.0,
+     "toPerUnit": 2821.180555555557,
+     "currency": "CHF",
+     "currencySource": "conversion",
+     "type": "b2b",
+     "unit": "Month",
+     "gross": false
+    },
+    {
+     "from": 1953.0,
+     "fromPerUnit": 1953.125000000001,
+     "to": 2821.0,
+     "toPerUnit": 2821.180555555557,
+     "currency": "CHF",
+     "currencySource": "conversion",
+     "type": "mandate_contract",
+     "unit": "Month",
+     "gross": true
+    },
+    {
+     "from": 1792.0,
+     "fromPerUnit": 1792.150381329777,
+     "to": 2589.0,
+     "toPerUnit": 2588.661661920789,
+     "currency": "GBP",
+     "currencySource": "conversion",
+     "type": "b2b",
+     "unit": "Month",
+     "gross": false
+    },
+    {
+     "from": 1792.0,
+     "fromPerUnit": 1792.150381329777,
+     "to": 2589.0,
+     "toPerUnit": 2588.661661920789,
+     "currency": "GBP",
+     "currencySource": "conversion",
+     "type": "mandate_contract",
+     "unit": "Month",
+     "gross": true
+    }
+   ],
+   "requiredSkills": [
+    {
+     "name": "udokumentowane doświadczenie doradcze",
+     "level": 1
+    },
+    {
+     "name": "znajomość produktów rynku finansowego",
+     "level": 1
+    },
+    {
+     "name": "umiejętność rozmowy z zamożnym klientem",
+     "level": 1
+    },
+    {
+     "name": "doświadczenie w sprzedaży produktów finansowych",
+     "level": 1
+    },
+    {
+     "name": "umiejętności negocjacyjne",
+     "level": 1
+    }
+   ],
+   "niceToHaveSkills": []
+  },
+  {
+   "guid": "d38c4540-0f40-473a-84df-3605f9bfd7e0",
+   "slug": "vb-idea-prosta-spolka-akcyjna-lekarka-lekarz---specjalista-endokrynologii-lub-w-trakcie-specjalizacji---wroclaw-wroclaw-zdrowie-lekarze",
+   "title": "Lekarka / Lekarz – Specjalista Endokrynologii lub w trakcie specjalizacji – Wrocław",
+   "workplaceType": "office",
+   "city": "Wrocław",
+   "companyName": "VB Idea Prosta Spółka Akcyjna",
+   "publishedAt": "2026-08-11T17:00:23.369296Z",
+   "employmentTypes": [
+    {
+     "from": null,
+     "fromPerUnit": null,
+     "to": null,
+     "toPerUnit": null,
+     "currency": "CHF",
+     "currencySource": "conversion",
+     "type": "any",
+     "unit": "month",
+     "gross": false
+    },
+    {
+     "from": null,
+     "fromPerUnit": null,
+     "to": null,
+     "toPerUnit": null,
+     "currency": "GBP",
+     "currencySource": "conversion",
+     "type": "any",
+     "unit": "month",
+     "gross": false
+    },
+    {
+     "from": null,
+     "fromPerUnit": null,
+     "to": null,
+     "toPerUnit": null,
+     "currency": "USD",
+     "currencySource": "conversion",
+     "type": "any",
+     "unit": "month",
+     "gross": false
+    },
+    {
+     "from": null,
+     "fromPerUnit": null,
+     "to": null,
+     "toPerUnit": null,
+     "currency": "EUR",
+     "currencySource": "conversion",
+     "type": "any",
+     "unit": "month",
+     "gross": false
+    },
+    {
+     "from": null,
+     "fromPerUnit": null,
+     "to": null,
+     "toPerUnit": null,
+     "currency": "PLN",
+     "currencySource": "original",
+     "type": "any",
+     "unit": "month",
+     "gross": false
+    }
+   ],
+   "requiredSkills": [
+    {
+     "name": "endokrynologia",
+     "level": 1
+    },
+    {
+     "name": "prawo wykonywania zawodu lekarza",
+     "level": 1
+    }
+   ],
+   "niceToHaveSkills": []
+  }
+ ],
+ "meta": {
+  "from": 0,
+  "totalItems": 3,
+  "prev": {
+   "cursor": null,
+   "itemsCount": 3
+  },
+  "next": {
+   "cursor": null,
+   "itemsCount": 3
+  }
+ }
+}

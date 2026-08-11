@@ -24,15 +24,18 @@ profiles:
     # Objawi się ostrzeżeniem "nofluffjobs zwróciło 0 ofert" w stopce maila.
     nofluffjobs_categories: [frontend, fullstack, mobile]
 
-  # Tekla Structures — patrz README, sekcja "Czego ten agregator nie znajdzie".
-  # JustJoinIT i NoFluffJobs to portale IT i NIE mają ofert z Teklą (sprawdzone
-  # na żywo: 0 trafień w 4000 ofert JJIT, 0 w 6000 ofert NFJ, 0 u firm z
-  # rejestru). Ten profil nic nie przyniesie, dopóki nie dojdzie źródło z
-  # ofertami inżynieryjno-budowlanymi (Pracuj.pl — poza zakresem, blokuje IP
-  # GitHuba). Zostaje włączony, bo nic nie kosztuje i złapie ofertę, gdyby
-  # któraś firma z `companies.yaml` taką wystawiła.
+  # Tekla Structures — dowozi je WYŁĄCZNIE RocketJobs.pl (portal spoza IT).
+  # JustJoinIT i NoFluffJobs mają zero takich ofert: to portale IT.
+  #
+  # Słowo "tekla" prawie nigdy nie jest w TYTULE — siedzi w `requiredSkills`
+  # (oferta Ferchau ma tytuł "Asystent/ka Projektanta Konstrukcji"). Dlatego
+  # matcher przeszukuje tytuł + umiejętności.
+  #
+  # Celowo BEZ samego "konstruktor": łapało "Konstruktor Elektronik" i
+  # "Konstruktor Wiązek Elektrycznych" — inna branża, czysty szum.
   - name: tekla
-    keywords: [tekla, "tekla structures", konstruktor, "projektant konstrukcji"]
+    keywords: [tekla, "advance steel", "projektant konstrukcji", "konstrukcji stalowych",
+               "konstruktor cad", "structural designer"]
     exclude: []
     locations: [szczecin]
     include_remote: true

@@ -50,16 +50,31 @@ Filtr kategorii zawęża pulę po stronie serwera do rozmiaru, który da się po
 ofert. Objawi się ostrzeżeniem „nofluffjobs zwróciło 0 ofert" w stopce maila
 i jako `::warning::` w logu Actions.
 
-## Czego ten agregator nie znajdzie
+### Oferty spoza IT (Tekla Structures) — RocketJobs.pl
 
-JustJoinIT i NoFluffJobs to portale **IT**. Oferty inżynieryjno-budowlane —
-np. dla **Tekla Structures** — praktycznie na nich nie występują. Sprawdzone na
-żywo 2026-08-07: 0 trafień na „tekla" w 4000 ofert JustJoinIT, 0 w 6000 ofert
-NoFluffJobs, 0 wśród 55 ofert z rejestru firm.
+JustJoinIT i NoFluffJobs to portale **wyłącznie IT** i nie mają ofert
+inżynieryjno-budowlanych: 0 trafień na „tekla" w 4000 ofert JustJoinIT i w
+6000 ofert NoFluffJobs. Dlatego doszło czwarte źródło — **RocketJobs.pl**,
+prowadzone przez tego samego operatora co justjoin.it, ale zbierające oferty
+spoza IT.
 
-Takie oferty są na Pracuj.pl i OLX, które są **poza zakresem** tego projektu:
-blokują ruch z zakresów adresowych GitHuba i wymagają realnej przeglądarki
-(patrz „Znane ryzyka" w specyfikacji). Wymagałoby to przeniesienia na VPS.
+Ważny szczegół: słowo „tekla" praktycznie nigdy nie jest w **tytule** oferty —
+siedzi w wymaganych umiejętnościach. Przykład z realnych danych:
+
+```
+title:  "Asystent/ka Projektanta Konstrukcji (konstrukcje żelbetowe i stalowe)"
+skills: ["Allplan", "język angielski", "tekla"]
+```
+
+Dlatego matcher przeszukuje **tytuł + umiejętności**. Wykluczenia (`exclude`)
+celowo patrzą tylko na tytuł, żeby `exclude: [senior]` nie odrzucało oferty
+juniorskiej wymagającej współpracy z seniorem.
+
+## Czego ten agregator nadal nie znajdzie
+
+**Pracuj.pl i OLX** są poza zakresem: blokują ruch z zakresów adresowych
+GitHuba i wymagają realnej przeglądarki (patrz „Znane ryzyka" w specyfikacji).
+Dołożenie ich wymagałoby przeniesienia całości na VPS.
 
 Uwaga: **pusta lista `locations` w jednym profilu nie zdejmuje filtra miast**
 dla pozostałych — źródła dostaną unię lokalizacji ze wszystkich profili.
