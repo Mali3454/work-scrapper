@@ -9,6 +9,7 @@ from scrapper.models import RawJob
 from scrapper.sources.ats.greenhouse import fetch_greenhouse
 from scrapper.sources.ats.lever import fetch_lever
 from scrapper.sources.ats.recruitee import fetch_recruitee
+from scrapper.sources.ats.smartrecruiters import fetch_smartrecruiters
 from scrapper.sources.ats.workable import fetch_workable
 
 logger = logging.getLogger(__name__)
@@ -68,6 +69,7 @@ DEFAULT_FETCHERS = {
     "greenhouse": fetch_greenhouse,
     "lever": fetch_lever,
     "workable": fetch_workable,
+    "smartrecruiters": fetch_smartrecruiters,
 }
 
 

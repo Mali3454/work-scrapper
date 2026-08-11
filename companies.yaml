@@ -36,14 +36,19 @@
   slug: homepl
   url: https://welcome.home.pl/kariera
 
-# TietoEVRY Poland (dawniej Tieto) ma biuro w Szczecinie (aleja Piastów 30,
-# oferty R&D/telekomunikacja). Zweryfikowano: careers.tieto.com linkuje do
-# smartrecruiters.com/my-applications/Tieto2 — SmartRecruiters, nie jeden z
-# 5 systemów objętych Task 15, więc parser: skip.
+# TietoEVRY Poland (dawniej Tieto) — biuro w Szczecinie, aleja Piastów 30.
+# Zweryfikowano: GET https://api.smartrecruiters.com/v1/companies/Tieto2/postings
+# → HTTP 200, 372 oferty, z tego **14 w Szczecinie** (juniorzy C/C++, DevOps,
+# testerzy, analitycy 4G/5G). Najlepsze źródło ofert IT ze Szczecina w całym
+# rejestrze.
+#
+# UWAGA co do sluga: musi być dokładnie "Tieto2". Warianty "Tieto", "TietoEVRY"
+# i "tietoevry" zwracają HTTP 200 z totalFound=0 — API NIE sygnalizuje złego
+# sluga błędem, więc literówka cicho wyzeruje firmę.
 - name: TietoEVRY
   ats: smartrecruiters
+  slug: Tieto2
   url: https://careers.tieto.com/
-  parser: skip
 
 # Spyrosoft Synergy — biuro w Szczecinie (wszczecinie.pl potwierdza otwarcie
 # i rozwój lokalnego zespołu). Strona kariery (spyro-soft.com/career) to

@@ -1,0 +1,91 @@
+{
+ "offset": 0,
+ "limit": 100,
+ "totalFound": 3,
+ "content": [
+  {
+   "id": "744000141699866",
+   "name": "Test Engineer- Tieto Tech Consulting (m/f/d)",
+   "company": {
+    "identifier": "Tieto2",
+    "name": "Tieto"
+   },
+   "releasedDate": "2026-08-05T11:45:06.679Z",
+   "location": {
+    "city": "Szczecin",
+    "region": "West Pomeranian Voivodeship",
+    "country": "pl",
+    "remote": false,
+    "hybrid": false,
+    "latitude": "53.4285438",
+    "longitude": "14.5528116",
+    "fullLocation": "Szczecin, West Pomeranian Voivodeship, Poland"
+   },
+   "department": {},
+   "typeOfEmployment": {
+    "id": "permanent",
+    "label": "Pełny etat"
+   },
+   "experienceLevel": {
+    "id": "mid_senior_level",
+    "label": "Kadra średniego szczebla"
+   },
+   "ref": "https://api.smartrecruiters.com/v1/companies/Tieto2/postings/744000141699866"
+  },
+  {
+   "id": "744000140721629",
+   "name": "System Analyst/Researcher 4G/5G - Tieto Tech Consulting (m/f/d)",
+   "company": {
+    "identifier": "Tieto2",
+    "name": "Tieto"
+   },
+   "releasedDate": "2026-07-30T15:26:17.455Z",
+   "location": {
+    "city": "Szczecin",
+    "country": "pl",
+    "remote": false,
+    "hybrid": true,
+    "fullLocation": "Szczecin, , Poland"
+   },
+   "department": {},
+   "typeOfEmployment": {
+    "id": "permanent",
+    "label": "Pełny etat"
+   },
+   "experienceLevel": {
+    "id": "mid_senior_level",
+    "label": "Kadra średniego szczebla"
+   },
+   "ref": "https://api.smartrecruiters.com/v1/companies/Tieto2/postings/744000140721629"
+  },
+  {
+   "id": "744000142857646",
+   "name": "Business Development Manager - Tieto Tech Consulting (m/f/d)",
+   "company": {
+    "identifier": "Tieto2",
+    "name": "Tieto"
+   },
+   "releasedDate": "2026-08-11T12:01:28.474Z",
+   "location": {
+    "city": "Brno",
+    "region": "South Moravian Region",
+    "country": "cz",
+    "remote": true,
+    "hybrid": false,
+    "latitude": "49.1950602",
+    "longitude": "16.6068371",
+    "fullLocation": "Brno, South Moravian Region, Czechia"
+   },
+   "department": {},
+   "typeOfEmployment": {
+    "id": "permanent",
+    "label": "Pełny etat"
+   },
+   "experienceLevel": {
+    "id": "mid_senior_level",
+    "label": "Kadra średniego szczebla"
+   },
+   "ref": "https://api.smartrecruiters.com/v1/companies/Tieto2/postings/744000142857646"
+  }
+ ]
+}

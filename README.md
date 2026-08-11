@@ -70,6 +70,33 @@ Dlatego matcher przeszukuje **tytuł + umiejętności**. Wykluczenia (`exclude`)
 celowo patrzą tylko na tytuł, żeby `exclude: [senior]` nie odrzucało oferty
 juniorskiej wymagającej współpracy z seniorem.
 
+## Oferty ze stron firm (`companies.yaml`)
+
+Obsługiwane systemy ATS: **Recruitee, Greenhouse, Lever, Workable,
+SmartRecruiters**. Dopisanie firmy to jedna linijka YAML-a — pod warunkiem że
+używa jednego z nich i znasz jej slug.
+
+Stan na 2026-08-11: 426 ofert z 6 firm, w tym **21 ze Szczecina** (TietoEVRY 14,
+home.pl 4, Global Wind Service 3).
+
+Firmy z `parser: skip` (Spyrosoft, Sii Polska, Arvato Systems, SoftwareMill,
+Shoper) mają **własne systemy rekrutacyjne bez publicznego API** — sprawdzone
+markery: recruitee, traffit, lever, greenhouse, workable, smartrecruiters,
+eRecruiter, elevato, teamtailor, bamboohr. Ich oferty i tak przychodzą przez
+portale, bo tam się ogłaszają.
+
+### Jak znaleźć slug nowej firmy
+
+1. Otwórz stronę kariery firmy i poszukaj w HTML nazwy któregoś ATS-a.
+2. Slug bywa **nieoczywisty**: Code & Pepper to `codepepper` (nie
+   `codeandpepper` — 404), MasterBorn to `masterborn-2`, TietoEVRY to `Tieto2`.
+3. **Zawsze sprawdź, ile ofert wróciło.** Greenhouse i Recruitee dają 404 na zły
+   slug, ale SmartRecruiters zwraca HTTP 200 z zerem — literówka wygląda wtedy
+   jak firma bez ofert.
+4. Sprawdź też, czy trafienie to na pewno ta firma. `accenture.recruitee.com`
+   zwraca HTTP 200 z dwiema ofertami, ale to konto demonstracyjne („Senior
+   Marketer (Sample)", Amsterdam), nie Accenture.
+
 ## Czego ten agregator nadal nie znajdzie
 
 **Pracuj.pl i OLX** są poza zakresem: blokują ruch z zakresów adresowych

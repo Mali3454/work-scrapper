@@ -989,3 +989,81 @@ Fixture: `tests/fixtures/rocketjobs.json` (3 realne oferty, przycięte
 kolumnowo do pól używanych przez parser: jedna z „tekla" w `requiredSkills`
 i tytułem bez tego słowa — sedno testu regresyjnego, jedna zdalna, jedna
 stacjonarna).
+
+## SmartRecruiters
+
+### Endpoint
+
+```
+GET https://api.smartrecruiters.com/v1/companies/<slug>/postings?limit=100&offset=<n>
+```
+
+Publiczny, nieautoryzowany. Paginacja przez `offset`, maks. `limit=100`.
+
+### Po co
+
+TietoEVRY ma biuro w Szczecinie (aleja Piastów 30) i wystawia tam **14 realnych
+ofert IT** na 372 w całej firmie — juniorzy C/C++, DevOps, testerzy, analitycy
+4G/5G. Do tej pory wpis miał `parser: skip`, więc te oferty nie docierały
+nigdzie. To dziś najlepsze źródło ofert IT ze Szczecina w całym rejestrze.
+
+### PUŁAPKA — zły slug nie daje błędu
+
+`GET .../companies/<cokolwiek>/postings` zwraca **HTTP 200 z `totalFound: 0`**,
+a nie 404. Sprawdzone: `Tieto` → 0, `TietoEVRY` → 0, `tietoevry` → 0, poprawny
+jest wyłącznie `Tieto2` → 372. Literówka w `companies.yaml` cicho wyzeruje
+firmę; jedynym sygnałem jest ostrzeżenie „0 ofert" w stopce maila i
+`::warning::` w logu Actions. To ta sama klasa pułapki co kategorie
+NoFluffJobs.
+
+### PUŁAPKA — paginacja jest obowiązkowa, nie opcjonalna
+
+W pierwszej setce ofert TietoEVRY **nie ma ani jednej ze Szczecina** — API nie
+sortuje po lokalizacji. Bez stronicowania po `offset` parser zwracałby 100
+ofert z Grazu, Wiednia i Linzu i wyglądałby na działający.
+
+### Data weryfikacji
+
+2026-08-11:
+- `companies/Tieto2/postings` → HTTP 200, `totalFound: 372`, 14 w Szczecinie
+- `https://jobs.smartrecruiters.com/Tieto2/<id>` → HTTP 200, a **zmyślone id →
+  HTTP 400**. Wariant `careers.smartrecruiters.com/...` odpada mimo HTTP 200:
+  zwraca 200 także dla zmyślonego id, więc nie da się nim potwierdzić, że
+  oferta istnieje.
+
+### Struktura oferty (pola istotne)
+
+```
+id                    — identyfikator oferty (string liczbowy)
+name                  — tytuł stanowiska (NIE "title")
+location.city         — miasto
+location.remote       — bool, PRAWDZIWE pole (nie trzeba heurystyki)
+location.hybrid       — bool; osobne od `remote`
+location.country      — kod kraju ("pl", "at", ...)
+releasedDate          — ISO 8601 z offsetem, data publikacji
+ref                   — URL do API (NIE adres publiczny — nie używać jako `url`)
+```
+
+### Mapowanie pól → `RawJob`
+
+| Pole w API | Pole w RawJob | Uwagi |
+| --- | --- | --- |
+| `id` | `external_id` | oferty bez `id` są pomijane z `logger.debug` |
+| `name` | `title` | uwaga: `name`, nie `title` |
+| — (parametr `company`) | `company` | z rejestru, jak w pozostałych ATS-ach |
+| `location.city` | `city` | przez wspólną `location.extract_city` |
+| `location.remote` | `remote` | prawdziwy bool; `is_remote(city)` tylko jako zabezpieczenie |
+| `id` (zbudowany URL) | `url` | `https://jobs.smartrecruiters.com/<slug>/<id>` — `ref` z payloadu to adres API, nie strona oferty |
+| — | `salary` | brak pola wynagrodzenia w tym endpoincie |
+| `releasedDate` | `posted_at` | ISO 8601 |
+
+**O normalizacji miasta:** na dzisiejszych danych TietoEVRY jest to no-op —
+żadne z 63 unikalnych miast się nie zmienia (`Warsaw`, `Wroclaw`, `Kraków`
+przechodzą bez zmian). Jest tam dla spójności z Greenhouse/Lever/Workable:
+gdyby firma wpisała `"Remote"` albo egzonim jako miasto, klucz deduplikacji
+rozjechałby się względem pozostałych ATS-ów. Ścieżkę pokrywa test na danych
+syntetycznych — realne jej nie uruchamiają.
+
+Fixture: `tests/fixtures/smartrecruiters.json` (3 realne oferty przycięte
+kolumnowo: dwie ze Szczecina — sedno testu regresyjnego — i jedna zdalna,
+żeby obie gałęzie `remote` miały pokrycie w realnych danych).
