@@ -1,5 +1,25 @@
 # work-scrapper
 
+## Aktualne zrodla bezposrednie (2026-09-04)
+
+Scraper nie ogranicza sie do portali. Rejestr ma 26 firm, z czego 24 sa
+aktywnie odpytywanych bezposrednio. Obejmuje TietoEVRY, home.pl, Sii Polska,
+Spyrosoft, Demant, BTC, Raynet, GryfTec, Global Wind Service, Code & Pepper,
+MasterBorn, Espeo, Shoper, Red Sky, Strix, Asseco Data Systems, GlobalLogic,
+3Shape, GammaSoft, HEUTHES, Appidea, Macrobond, Coloplast i Icotera. Dwa
+pozostale wpisy sa zachowane jako
+rozpoznane strony bez stabilnego publicznego interfejsu i nie sa liczone jako
+dzialajace zrodla.
+
+W tescie na zywo 2026-09-04 strony firm zwrocily 898 aktywnych ogloszen. Profil
+IT wybral z nich 73 pasujace oferty: 30 lokalnych oraz 43 zdalne. Liczby beda
+sie naturalnie zmieniac wraz z publikowaniem i zamykaniem rekrutacji.
+
+Profile w `config.yaml` obejmuja frontend, szersze role IT ze
+Szczecina/Mierzyna i zdalne z Polski oraz BIM/Revit/Tekla. Dla ostatniego
+profilu przeszukiwany jest rowniez opis oferty, poniewaz nazwa narzedzia czesto
+nie wystepuje w tytule.
+
 Agreguje oferty pracy z portali i stron firm, wysyła mailem tylko nowe.
 
 ## Jak działa
@@ -24,9 +44,9 @@ powoduje przegapienia ofert.
 **Oferty zdalne z całej Polski** plus wszystkie oferty (zdalne i stacjonarne)
 z miast wymienionych w `locations`.
 
-Działa to tak, bo portale tagują ofertę zdalną miastem siedziby firmy — Shoper
-ma 18 ofert `remote=True`, wszystkie z `city: Kraków`. Zapytanie wyłącznie o
-Szczecin by ich nie zwróciło, mimo że można na nie pracować ze Szczecina.
+Działa to tak, bo portale tagują ofertę zdalną miastem siedziby firmy — np.
+zdalne oferty Shopera mogą mieć `city: Kraków`. Zapytanie wyłącznie o Szczecin
+by ich nie zwróciło, mimo że można na nie pracować ze Szczecina.
 Dlatego przy `include_remote: true` źródła dociągają dodatkowo pulę
 ogólnopolską, a matcher przepuszcza z niej tylko oferty zdalne (stacjonarne
 spoza `locations` odpada).
@@ -73,17 +93,17 @@ juniorskiej wymagającej współpracy z seniorem.
 ## Oferty ze stron firm (`companies.yaml`)
 
 Obsługiwane systemy ATS: **Recruitee, Greenhouse, Lever, Workable,
-SmartRecruiters**. Dopisanie firmy to jedna linijka YAML-a — pod warunkiem że
-używa jednego z nich i znasz jej slug.
+SmartRecruiters i SAP SuccessFactors**. Są też bezpośrednie integracje z API
+Sii i Spyrosoft oraz parser prostych firmowych stron HTML.
 
-Stan na 2026-08-11: 426 ofert z 6 firm, w tym **21 ze Szczecina** (TietoEVRY 14,
-home.pl 4, Global Wind Service 3).
+Stan na 2026-09-04: **898 ofert z 24 aktywnie parsowanych firm**. Rejestr
+obejmuje duże centra technologiczne, lokalne software house'y oraz firmy
+e-commerce. Liczby są zmienne i służą jako punkt kontrolny przy diagnozowaniu
+parserów.
 
-Firmy z `parser: skip` (Spyrosoft, Sii Polska, Arvato Systems, SoftwareMill,
-Shoper) mają **własne systemy rekrutacyjne bez publicznego API** — sprawdzone
-markery: recruitee, traffit, lever, greenhouse, workable, smartrecruiters,
-eRecruiter, elevato, teamtailor, bamboohr. Ich oferty i tak przychodzą przez
-portale, bo tam się ogłaszają.
+Z `parser: skip` pozostają tylko Arvato Systems i SoftwareMill. Ich własne
+systemy nadal nie mają w projekcie stabilnej integracji; oferty mogą jednak
+wpadać przez portale.
 
 ### Jak znaleźć slug nowej firmy
 

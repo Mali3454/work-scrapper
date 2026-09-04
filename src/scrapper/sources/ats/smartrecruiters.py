@@ -68,6 +68,7 @@ def parse_smartrecruiters(payload: dict, company: str, slug: str) -> list[RawJob
                 url=OFFER_URL.format(slug=slug, posting_id=posting_id),
                 salary=None,  # brak pola wynagrodzenia w tym endpoincie
                 posted_at=_parse_datetime(posting.get("releasedDate")),
+                country=location.get("country"),
             )
         )
     return jobs

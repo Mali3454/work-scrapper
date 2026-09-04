@@ -153,3 +153,22 @@ def test_fetch_raises_on_http_error():
     with httpx.Client(transport=httpx.MockTransport(handler)) as client:
         with pytest.raises(httpx.HTTPStatusError):
             fetch_recruitee(entry, client)
+
+
+def test_fetch_can_use_recruitee_custom_domain_api():
+    requested = []
+
+    def handler(request):
+        requested.append(str(request.url))
+        return httpx.Response(200, json={"offers": []})
+
+    entry = CompanyEntry(
+        name="Strix",
+        ats="recruitee",
+        slug="strix",
+        api_url="https://career.strix.example/api/offers/",
+    )
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        fetch_recruitee(entry, client)
+
+    assert requested == ["https://career.strix.example/api/offers/"]

@@ -8,8 +8,9 @@ smtp:
 profiles:
   - name: frontend-szczecin
     keywords: [frontend, react, javascript, typescript, angular, vue]
-    exclude: [senior, lead, staff, architect]
-    locations: [szczecin]
+    exclude: [senior, starszy, starsza, lead, leader, staff, architect, manager,
+              principal, director, head, kierownik]
+    locations: [szczecin, mierzyn]
     include_remote: true
     max_age_days: 14
     # Bez tego NoFluffJobs praktycznie nic nie dowoził: ma ~21600 ofert
@@ -24,6 +25,26 @@ profiles:
     # Objawi się ostrzeżeniem "nofluffjobs zwróciło 0 ofert" w stopce maila.
     nofluffjobs_categories: [frontend, fullstack, mobile]
 
+  # Szersze IT: lokalne oferty ze Szczecina/Mierzyna oraz praca w pelni zdalna
+  # z calej Polski. Ten profil sprawia, ze firmowe strony Sii, Spyrosoft,
+  # TietoEVRY, Demant, BTC, Raynet i GryfTec nie sa ograniczone tylko do Reacta.
+  - name: it-szczecin-remote
+    keywords: [developer, programista, tester, frontend, backend, fullstack, "full stack",
+               "software engineer", "qa engineer", "specjalista ds. jakości",
+               "test engineer", "quality assurance", "automation engineer", devops,
+               "cloud engineer", "data engineer", "it specialist", "it support",
+               "support engineer", "system administrator", "systems analyst",
+               "system analyst", "it analyst", "analityk systemowy", "analityk it",
+               "embedded engineer", "firmware engineer"]
+    exclude: [senior, starszy, starsza, lead, leader, staff, architect, manager,
+              principal, director, head, kierownik]
+    locations: [szczecin, mierzyn]
+    include_remote: true
+    max_age_days: 30
+    # NFJ pozostaje ograniczony do rozsadnej liczby stron API. Pozostale role
+    # szerokiego IT sa pobierane z JJIT oraz bezposrednio od firm.
+    nofluffjobs_categories: [frontend, fullstack, mobile]
+
   # Tekla Structures — dowozi je WYŁĄCZNIE RocketJobs.pl (portal spoza IT).
   # JustJoinIT i NoFluffJobs mają zero takich ofert: to portale IT.
   #
@@ -33,10 +54,15 @@ profiles:
   #
   # Celowo BEZ samego "konstruktor": łapało "Konstruktor Elektronik" i
   # "Konstruktor Wiązek Elektrycznych" — inna branża, czysty szum.
-  - name: tekla
-    keywords: [tekla, "advance steel", "projektant konstrukcji", "konstrukcji stalowych",
-               "konstruktor cad", "structural designer"]
+  - name: bim-revit-tekla
+    keywords: [revit, "revit api", dynamo, tekla, "tekla structures",
+               "bim developer", "bim programmer", "bim automation",
+               "bim modeller", "bim modeler", "bim coordinator", "inżynier bim",
+               "projektant bim", "modelarz tekla", "steel detailer",
+               "computational designer", "advance steel", "projektant konstrukcji",
+               "konstrukcji stalowych", "konstruktor cad", "structural designer"]
     exclude: []
-    locations: [szczecin]
+    locations: [szczecin, mierzyn]
     include_remote: true
+    search_description: true
     max_age_days: 30

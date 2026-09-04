@@ -15,6 +15,9 @@ def _contains_word(haystack: str, needle: str) -> bool:
 
 def _location_ok(job: RawJob, profile: Profile) -> bool:
     if job.remote:
+        country = (job.country or "").strip().casefold()
+        if country and country not in {"pl", "poland", "polska"}:
+            return False
         return profile.include_remote
     if not profile.locations:
         return True
@@ -23,19 +26,27 @@ def _location_ok(job: RawJob, profile: Profile) -> bool:
 
 
 def _age_ok(job: RawJob, profile: Profile, now: datetime) -> bool:
+    # Jesli oferta nadal widnieje na firmowym boardzie, jest aktywna niezaleznie
+    # od pierwotnej daty publikacji. Limit wieku chroni przed starymi kopiami na
+    # portalach, nie przed aktualnymi wakatami na stronie pracodawcy.
+    if job.source.startswith("company:"):
+        return True
     if job.posted_at is None:
         return True
     return job.posted_at >= now - timedelta(days=profile.max_age_days)
 
 
-def _keyword_haystack(job: RawJob) -> str:
+def _keyword_haystack(job: RawJob, profile: Profile) -> str:
     """Tytuł + wymagane umiejętności — tam szukamy słów kluczowych.
 
     Sama nazwa narzędzia bywa wyłącznie w `skills`: oferta „Asystent/ka
     Projektanta Konstrukcji" (RocketJobs) ma „Tekla” tylko tam. Szukanie po
     samym tytule gubiłoby takie oferty.
     """
-    return " ".join([job.title, *job.skills])
+    parts = [job.title, *job.skills]
+    if profile.search_description:
+        parts.append(job.search_text)
+    return " ".join(parts)
 
 
 def matches(job: RawJob, profile: Profile, now: datetime) -> bool:
@@ -44,7 +55,7 @@ def matches(job: RawJob, profile: Profile, now: datetime) -> bool:
     # z seniorem, a wykluczenia mają dotyczyć poziomu stanowiska, nie techniki.
     if any(_contains_word(job.title, word) for word in profile.exclude):
         return False
-    haystack = _keyword_haystack(job)
+    haystack = _keyword_haystack(job, profile)
     if not any(_contains_word(haystack, word) for word in profile.keywords):
         return False
     if not _location_ok(job, profile):

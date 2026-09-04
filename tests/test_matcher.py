@@ -58,6 +58,19 @@ def test_accepts_remote_job_from_other_city():
     assert matches(_job(city="Kraków", remote=True), PROFILE, NOW) is True
 
 
+def test_rejects_remote_job_explicitly_based_outside_poland():
+    assert matches(_job(city=None, country="Ukraine", remote=True), PROFILE, NOW) is False
+
+
+def test_description_is_searched_only_when_profile_opts_in():
+    job = _job(title="BIM Specialist", search_text="Revit API and Dynamo")
+    regular = PROFILE.model_copy(update={"keywords": ["revit"]})
+    description_profile = regular.model_copy(update={"search_description": True})
+
+    assert matches(job, regular, NOW) is False
+    assert matches(job, description_profile, NOW) is True
+
+
 def test_rejects_remote_when_profile_excludes_remote():
     profile = PROFILE.model_copy(update={"include_remote": False})
 
@@ -66,6 +79,15 @@ def test_rejects_remote_when_profile_excludes_remote():
 
 def test_rejects_job_older_than_max_age():
     assert matches(_job(posted_at=NOW - timedelta(days=30)), PROFILE, NOW) is False
+
+
+def test_accepts_active_company_job_even_when_originally_posted_long_ago():
+    job = _job(
+        source="company:redsky",
+        posted_at=NOW - timedelta(days=90),
+    )
+
+    assert matches(job, PROFILE, NOW) is True
 
 
 def test_accepts_job_without_posted_at():

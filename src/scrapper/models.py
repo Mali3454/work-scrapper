@@ -21,6 +21,14 @@ class RawJob(BaseModel):
     # Konstrukcji", a "Tekla" siedzi w requiredSkills. Szukanie po samym tytule
     # gubiłoby ją bezpowrotnie.
     skills: list[str] = Field(default_factory=list)
+    # Dodatkowy tekst uzywany tylko podczas dopasowania (np. opis z firmowego
+    # API). Nie zapisujemy go do jobs.jsonl ani nie wysylamy w mailu: opisy sa
+    # duze, a ich jedynym zadaniem jest znalezienie technologii takich jak
+    # Revit/Tekla, ktore czesto nie wystepuja w tytule stanowiska.
+    search_text: str = Field(default="", exclude=True)
+    # Metadane geograficzne z globalnych firmowych ATS-ow. Brak kraju nie
+    # blokuje oferty, ale jawne "Ukraine" nie moze udawac pracy zdalnej z PL.
+    country: str | None = Field(default=None, exclude=True)
 
     @field_validator("posted_at", mode="before")
     @classmethod
@@ -46,6 +54,10 @@ class Profile(BaseModel):
     locations: list[str] = Field(default_factory=list)
     include_remote: bool = True
     max_age_days: int = 14
+    # Pelny opis latwo daje falszywe trafienia (np. QA wspomina JavaScript).
+    # Wlaczamy go tylko dla profili narzedziowych, gdzie Revit/Tekla zwykle sa
+    # ukryte w wymaganiach zamiast w tytule.
+    search_description: bool = False
     # Kategorie NoFluffJobs zawężające zapytanie PO STRONIE SERWERA.
     # NFJ ma ~21600 ofert ogólnopolsko, nie sortuje po dacie i nie przyjmuje
     # żadnego parametru sortowania (sprawdzone: `sort`, `rawSearch`), więc

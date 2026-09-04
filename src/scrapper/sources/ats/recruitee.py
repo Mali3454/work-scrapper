@@ -97,12 +97,13 @@ def parse_recruitee(payload: dict, company: str, slug: str) -> list[RawJob]:
                 url=url,
                 salary=_salary(offer.get("salary")),
                 posted_at=_parse_datetime(offer.get("published_at")),
+                country=offer.get("country_code") or offer.get("country"),
             )
         )
     return jobs
 
 
 def fetch_recruitee(entry, client: httpx.Client) -> list[RawJob]:
-    response = client.get(API_URL.format(slug=entry.slug))
+    response = client.get(entry.api_url or API_URL.format(slug=entry.slug))
     response.raise_for_status()
     return parse_recruitee(response.json(), company=entry.name, slug=entry.slug)

@@ -6,11 +6,16 @@ import yaml
 from pydantic import BaseModel, ValidationError
 
 from scrapper.models import RawJob
+from scrapper.sources.ats.bamboohr import fetch_bamboohr
 from scrapper.sources.ats.greenhouse import fetch_greenhouse
 from scrapper.sources.ats.lever import fetch_lever
 from scrapper.sources.ats.recruitee import fetch_recruitee
 from scrapper.sources.ats.smartrecruiters import fetch_smartrecruiters
 from scrapper.sources.ats.workable import fetch_workable
+from scrapper.sources.company_pages import fetch_company_page
+from scrapper.sources.sii import fetch_sii
+from scrapper.sources.spyrosoft import fetch_spyrosoft
+from scrapper.sources.successfactors import fetch_successfactors
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +33,12 @@ class CompanyEntry(BaseModel):
     slug: str | None = None
     url: str | None = None
     parser: str | None = None
+    city: str | None = None
+    item_selector: str | None = None
+    title_selector: str | None = None
+    link_selector: str | None = None
+    location_selector: str | None = None
+    api_url: str | None = None
 
 
 def load_companies(path: Path) -> list[CompanyEntry]:
@@ -65,11 +76,16 @@ def load_companies(path: Path) -> list[CompanyEntry]:
 
 
 DEFAULT_FETCHERS = {
+    "bamboohr": fetch_bamboohr,
     "recruitee": fetch_recruitee,
     "greenhouse": fetch_greenhouse,
     "lever": fetch_lever,
     "workable": fetch_workable,
     "smartrecruiters": fetch_smartrecruiters,
+    "successfactors": fetch_successfactors,
+    "sii": fetch_sii,
+    "spyrosoft": fetch_spyrosoft,
+    "html": fetch_company_page,
 }
 
 
@@ -79,7 +95,7 @@ class CompaniesSource:
     Awaria jednej firmy (padnięta strona, timeout, HTTP 5xx) jest logowana
     (`logger.warning`) i pomijana — nie może zabrać ze sobą pozostałych
     firm w rejestrze. Wpisy z `parser: skip` oraz z ATS-em, dla którego nie
-    ma jeszcze fetchera (np. `traffit`, `smartrecruiters`, `custom` —
+    ma jeszcze fetchera (np. `traffit` lub `custom` —
     Traffit pozostaje nieobsługiwany, patrz docs/sources.md) są pomijane po
     cichu z logiem `logger.info`, nie są to awarie.
     """

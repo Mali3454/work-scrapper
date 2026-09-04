@@ -4,14 +4,14 @@
 # .superpowers/sdd/2026-08-06-job-scraper/task-14-report.md.
 #
 # ats:
-#   recruitee, greenhouse, lever, workable
-#               — obsługiwane (src/scrapper/sources/ats/)
-#   traffit, smartrecruiters, custom
-#               — ATS zidentyfikowany, ale bez parsera w tym repo (Traffit:
-#                 zbadane w Task 15, nie znaleziono zweryfikowanej firmy z
-#                 realnym publicznym API — patrz docs/sources.md).
-#                 `parser: skip` — CompaniesSource pomija wpis z logiem,
-#                 bez awarii.
+#   bamboohr, recruitee, greenhouse, lever, workable, smartrecruiters,
+#   successfactors
+#               — publiczne ATS-y obsługiwane przez parsery projektu.
+#   sii, spyrosoft
+#               — dedykowane integracje z firmowym API i paginacją.
+#   html        — serwerowo renderowane listy; selektory są w tym pliku.
+#   custom      — strona bez stabilnego parsera; `parser: skip` pomija wpis
+#                 bez awarii całego przebiegu.
 
 # Zweryfikowano bezpośrednio: GET https://espeo.recruitee.com/api/offers/
 # → HTTP 200, realne oferty. Espeo Software ma siedzibę w Poznaniu (NIE w
@@ -55,19 +55,56 @@
 # WordPress (widoczny marker `api.w.org` w HTML) z niestandardowym,
 # renderowanym po stronie klienta listingiem ofert — brak śladu
 # recruitee/traffit/lever/greenhouse/workable w HTML.
+# Aktualizacja 2026-09-04: strona wystawia publiczny endpoint Teamtailor przez
+# /wp-json/teamtailor/v1/get-jobs, wiec wpis nie jest juz pomijany.
 - name: Spyrosoft
-  ats: custom
-  url: https://spyro-soft.com/careers-site-szczecin
-  parser: skip
+  ats: spyrosoft
+  slug: spyrosoft
+  url: https://spyro-soft.com/career
 
 # Sii Polska — oddział Szczecin potwierdzony (sii.pl/en/branch/szczecin/,
 # Open Day Szczecin 2025). Centrum specjalizuje się w automotive (C++,
 # AUTOSAR). Strona kariery renderowana po stronie klienta (JS), brak
 # widocznego markera zewnętrznego ATS w statycznym HTML — własny system Sii.
+# Aktualizacja 2026-09-04: frontend Sii korzysta z publicznego
+# web-job-api.sii.pl; pobieramy wszystkie strony wynikow.
 - name: Sii Polska
-  ats: custom
+  ats: sii
+  slug: sii
   url: https://sii.pl/kariera/oferty-pracy/
-  parser: skip
+
+# Demant / Oticon ma duze centrum technologiczne w Szczecinie i Mierzynie.
+# Firmowa lista IT dziala na SAP SuccessFactors i jest parsowana bezposrednio.
+- name: Demant
+  ats: successfactors
+  slug: demant
+  url: https://careers.demant.com/DemantPoland/go/IT-%26-Software-Solutions/8759201/
+
+# Lokalne szczecinskie firmy z prostymi listami ofert na wlasnych stronach.
+- name: BTC
+  ats: html
+  slug: btc
+  url: https://btc.com.pl/en/career/job-offers/
+  parser: html_cards
+  item_selector: article.category-job-offers
+  title_selector: .elementor-post__title a
+  location_selector: .elementor-post__excerpt
+
+- name: Raynet Polska
+  ats: html
+  slug: raynet
+  url: https://kariera.raynet.pl/
+  city: Szczecin
+  parser: html_links
+  link_selector: main .entry-content ul a
+
+- name: GryfTec
+  ats: html
+  slug: gryftec
+  url: https://gryftec.com/en/careers/current-offers/
+  city: Szczecin
+  parser: html_links
+  link_selector: "#menu-en-careers .sub-menu a[href]"
 
 # Arvato Systems / Arvato Polska — centrum w Szczecinie (szczecinbiznes.pl,
 # liczne oferty na Indeed/Pracuj.pl dla lokalizacji Szczecin). Zweryfikowano:
@@ -120,16 +157,116 @@
   slug: masterborn-2
   url: https://masterborn.com/career
 
-# Shoper — strona kariery (kariera.shoper.pl, HTTP 200) wymienia Szczecin, więc
-# obecność potwierdzona. Brak JAKIEGOKOLWIEK markera zewnętrznego ATS-u w HTML
-# (sprawdzono: recruitee, traffit, lever, greenhouse, workable, smartrecruiters,
-# eRecruiter, elevato, teamtailor, bamboohr) — własny system, parsera nie da się
-# napisać. Jego 18 ofert (wszystkie remote, otagowane Krakowem) i tak wpada teraz
-# do puli przez zapytanie ogólnopolskie na portalach.
+# Shoper — firma e-commerce z obecnością w Szczecinie. Lista ofert jest obecnie
+# renderowana w HTML po stronie serwera, więc czytamy ją bezpośrednio zamiast
+# polegać wyłącznie na kopiach ogłoszeń z portali.
 - name: Shoper
-  ats: custom
-  url: https://kariera.shoper.pl/
-  parser: skip
+  ats: html
+  slug: shoper
+  url: https://kariera.shoper.pl/oferty-pracy
+  parser: html_cards
+  item_selector: "[data-link='open-role']"
+  title_selector: .heading-style-h5
+  link_selector: a.inline-link
+  location_selector: .margin-bottom.margin-xsmall
+
+# Szczecinski startup studio; publiczny board Recruitee.
+- name: Red Sky
+  ats: recruitee
+  slug: redsky
+  url: https://redsky.recruitee.com/
+
+# E-commerce software house. Recruitee dziala pod firmowa domena, dlatego
+# endpoint jest podany jawnie zamiast budowany ze sluga.
+- name: Strix
+  ats: recruitee
+  slug: strix
+  url: https://career.strix.net/l/en/homepage
+  api_url: https://career.strix.net/api/offers/
+
+# Asseco Data Systems ma biuro w Szczecinie. Strona startowa zawiera
+# serwerowo renderowana liste najnowszych ofert, w tym lokalizacje.
+- name: Asseco Data Systems
+  ats: html
+  slug: assecods
+  url: https://kariera.assecods.pl/strona-startowa
+  parser: html_cards
+  item_selector: section.new-offers a.job
+  title_selector: .job__label span[style]
+  location_selector: .job__location
+
+- name: GlobalLogic
+  ats: smartrecruiters
+  slug: GlobalLogic4
+  url: https://careers.smartrecruiters.com/GlobalLogic4
+
+- name: 3Shape
+  ats: html
+  slug: 3shape
+  url: https://careers.3shape.com/jobs?location_id=60211
+  city: Szczecin
+  parser: html_links
+  link_selector: "a[href^='https://careers.3shape.com/jobs/']"
+
+- name: GammaSoft
+  ats: html
+  slug: gammasoft
+  url: https://gammasoft.pl/careers/
+  parser: html_cards
+  item_selector: .open-positions-section-list-item
+  title_selector: h3.heading-third
+  link_selector: a[href]
+  location_selector: .open-position-info
+
+- name: HEUTHES
+  ats: html
+  slug: heuthes
+  url: https://www.heuthes.pl/praca-w-heuthes.html
+  city: Szczecin
+  parser: html_links
+  link_selector: ".list-group a[href*='#']"
+
+- name: Appidea
+  ats: html
+  slug: appidea
+  url: https://appidea.co/career/
+  city: Szczecin
+  parser: html_cards
+  item_selector: section.col-custom
+  title_selector: .description-container h2
+  link_selector: .description-container a[href]
+
+# Szczecinska siedziba firmy produktowej. BambooHR wystawia publiczna liste
+# wszystkich rekrutacji wraz z miastem, dlatego nie przypisujemy Szczecina
+# ofertom z pozostalych biur.
+- name: Macrobond
+  ats: bamboohr
+  slug: macrobond
+  url: https://macrobond.bamboohr.com/careers/
+  api_url: https://macrobond.bamboohr.com/careers/list
+
+# Centrum Coloplast Business Centre dziala w Szczecinie. Firmowy portal SAP
+# renderuje pelna tabele polskich ofert po stronie serwera.
+- name: Coloplast
+  ats: html
+  slug: coloplast
+  url: https://careers.coloplast.com/go/Poland/4766501/
+  parser: html_cards
+  item_selector: tr.data-row
+  title_selector: a.jobTitle-link
+  link_selector: a.jobTitle-link
+  location_selector: td.colLocation
+
+# R&D Icotera Poland miesci sie w Szczecinie. Strona publikuje aktywne role
+# jako bezposrednie linki `.career`; lista zmienia sie bez zmiany selektora.
+- name: Icotera
+  ats: html
+  slug: icotera
+  url: https://icotera.com/career/software-developer-with-python
+  city: Szczecin
+  parser: html_cards
+  item_selector: a.career[href]
+  title_selector: h4
 
 # ODRZUCONE mimo trafienia HTTP 200: https://accenture.recruitee.com/api/offers/
 # zwraca 2 oferty, ale to konto demonstracyjne, NIE Accenture — oferty to
